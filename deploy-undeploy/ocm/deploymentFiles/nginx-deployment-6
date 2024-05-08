@@ -1,0 +1,37 @@
+
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  namespace: cluster1
+  name: nginx-manifest-6
+spec:
+  workload:
+    manifests:
+      - apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          namespace: default
+          name: nginx-deployment-sa-6
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          namespace: default
+          name: nginx-deployment-6
+          labels:
+            app: nginx-deployment-6
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: nginx-deployment-6
+          template:
+            metadata:
+              labels:
+                app: nginx-deployment-6
+            spec:
+              serviceAccountName: nginx-deployment-sa-6
+              containers:
+                - name: nginx
+                  image: nginx:1.14.2
+                  ports:
+                    - containerPort: 80
