@@ -1,0 +1,48 @@
+{
+  "sla_version" : "v2.0",
+  "customerID" : "Admin",
+  "applications" : [
+    {
+      "applicationID" : "",
+      "application_name" : "overhead",
+      "application_namespace" : "test",
+      "application_desc" : "test1 demo",
+      "microservices" : [
+        {
+          "microserviceID": "",
+          "microservice_name": "client",
+          "microservice_namespace": "test",
+          "virtualization": "container",
+          "memory": 50,
+          "vcpus": 1,
+          "vgpus": 0,
+          "vtpus": 0,
+          "bandwidth_in": 0,
+          "bandwidth_out": 0,
+          "storage": 0,
+          "code": "ghcr.io/jakobke/oakestra/overhead-management-client:latest",
+          "state": "",
+          "added_files": [],
+          "environment": ["NUM_PROGRAMS=10", "DURATION_IN_SECONDS=60", "SERVICE_URL=management-overhead.default.svc.cluster.local" ]
+        },
+        {
+          "microserviceID": "",
+          "microservice_name": "server",
+          "microservice_namespace": "test",
+          "virtualization": "container",
+          "memory": 50,
+          "vcpus": 1,
+          "vgpus": 0,
+          "vtpus": 0,
+          "bandwidth_in": 0,
+          "bandwidth_out": 0,
+          "storage": 0,
+          "code": "ghcr.io/jakobke/oakestra/overhead-management-server:latest",
+          "state": "",
+          "port": "7070:7070",
+          "added_files": []
+        }
+      ]
+    }
+  ]
+}

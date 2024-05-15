@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-client
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: management-overhead-client
+  template:
+    metadata:
+      labels:
+        app: management-overhead-client
+    spec:
+      containers:
+      - name: management-overhead-client
+        image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
+        imagePullPolicy: Always 
+        env:  
+        - name: NUM_PROGRAMS
+          value: "10"  
+        - name: DURATION_IN_SECONDS
+          value: "60"  
+        - name: SERVICE_URL
+          value: "management-overhead.default.svc.cluster.local" # TODO - noch testen, ob das wirklich funktioniert. 
+
+--- 
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-server
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: management-overhead-server
+  template:
+    metadata:
+      labels:
+        app: management-overhead-server
+    spec:
+      containers:
+      - name: management-overhead-server
+        image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
+        imagePullPolicy: Always 
+    
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: management-overhead
+spec:
+  selector:
+    app: management-overhead-server
+  ports:
+  - protocol: TCP
+    port: 7070
+    targetPort: 7070

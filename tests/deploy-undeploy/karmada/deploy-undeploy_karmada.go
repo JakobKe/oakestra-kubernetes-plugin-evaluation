@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 	"text/template"
 	"time"
 
@@ -46,27 +47,69 @@ type DeploymentInfo struct {
 func main() {
 	createK8SClient()
 
-	numDeployments := 10
+	numDeployments := 3
 
 	fmt.Println("Start Deployment...")
-	deploymentInfos := deployOCM(numDeployments)
+	deploymentInfos := deployKarmada(numDeployments)
 
 	fmt.Println("Timer starts...")
 	time.Sleep(5 * time.Second)
 	deploymentInfos = getDeploymentInfo(deploymentInfos)
 
-	fmt.Println("Delete deployments...")
-	deletedDeployments, err := undeployOCM()
+	copy := make(map[string]int)
+	for key := range deploymentInfos {
+		copy[key] = 0
+	}
+	terminatedPodsChan := make(chan map[string]time.Time)
+	cleanedPodsChan := make(chan map[string]time.Time)
+	deletedDeploymentsChan := make(chan map[string]time.Time)
+	errChan := make(chan error)
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		fmt.Println("Routine get Informations starts...")
+		terminatedPods, cleanedPods, err := getFinalizedDeployments(copy)
+		if err != nil {
+			errChan <- err
+			return
+		}
+
+		terminatedPodsChan <- terminatedPods
+		cleanedPodsChan <- cleanedPods
+	}()
+
+	go func() {
+		defer wg.Done()
+		fmt.Println("Routine Undeploy starts...")
+		deletedDeployments, err := undeployKarmada()
+		if err != nil {
+			errChan <- err
+			return
+		}
+		deletedDeploymentsChan <- deletedDeployments
+	}()
+
+	go func() {
+		wg.Wait()
+		close(terminatedPodsChan)
+		close(cleanedPodsChan)
+		close(deletedDeploymentsChan)
+		close(errChan)
+	}()
+
+	terminatedPods := <-terminatedPodsChan
+	cleanedPods := <-cleanedPodsChan
+	deletedDeployments := <-deletedDeploymentsChan
+	err := <-errChan
 	if err != nil {
-		log.Fatalf("Failed to delete deployments: %v", err)
+		log.Fatalf("Error: %v", err)
 	}
 
-	// TODO - Das muss noch angepasst werden.
-	fmt.Println("Get Finalized Time...")
-	finalizedDeployments, _ := getFinalizedDeployments(deletedDeployments)
-
 	fmt.Println("Write to CSV")
-	writeInfoToCSV("kubernetes.deploy.undeploy.csv", deploymentInfos, deletedDeployments, finalizedDeployments)
+	writeInfoToCSV("kubernetes.deploy.undeploy.csv", deploymentInfos, deletedDeployments, terminatedPods, cleanedPods)
 }
 
 func createK8SClient() {
@@ -84,16 +127,15 @@ func createK8SClient() {
 	}
 }
 
-func deployOCM(numDeployments int) map[string]DeploymentInfo {
+func deployKarmada(numDeployments int) map[string]DeploymentInfo {
 
 	dir := "./deploymentFiles"
 	os.MkdirAll(dir, 0755)
 
 	for i := 1; i <= numDeployments; i++ {
 		deploymentName := fmt.Sprintf("nginx-deployment-%d", i)
-		serviceAccount := fmt.Sprintf("nginx-deployment-sa-%d", i)
 
-		yamlContent, err := createOCMYAML(deploymentName, serviceAccount, deploymentName)
+		yamlContent, err := createKarmadaYAML(deploymentName)
 		if err != nil {
 			fmt.Println("Error creating YAML:", err)
 			return nil
@@ -109,6 +151,7 @@ func deployOCM(numDeployments int) map[string]DeploymentInfo {
 	}
 
 	return applyYAMLFilesInFolder(dir)
+
 }
 
 func deleteYAMLFilesInFolder(folder string) map[string]time.Time {
@@ -163,48 +206,58 @@ func execYAMLFile(filePath string, command string) {
 
 }
 
-func getFinalizedDeployments(deletedDeployments map[string]time.Time) (map[string]time.Time, error) {
-	finalizedDeployments := map[string]time.Time{}
+func getFinalizedDeployments(deletedDeployments map[string]int) (map[string]time.Time, map[string]time.Time, error) {
+	terminatedPods := map[string]time.Time{}
+	cleanedPods := map[string]time.Time{}
 
 	for {
-		listOptions := metav1.ListOptions{
+		pods, err := clientset.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{
 			LabelSelector: "evaluation=test",
-		}
-		deployments, err := clientset.AppsV1().Deployments("default").List(context.TODO(), listOptions)
+		})
 		if err != nil {
-			return nil, fmt.Errorf("error listing deployments: %v", err)
+			log.Printf("Error getting pods for finalized Information: %v\n", err)
+			return nil, nil, err
 		}
 
-		fmt.Println(len(deployments.Items))
-		if len(deployments.Items) == 0 {
-			break
-		}
+		stillActiveDeployments := make(map[string]int, len(pods.Items))
+		for _, pod := range pods.Items {
+			if deploymentName, ok := pod.Labels["app"]; ok {
+				stillActiveDeployments[deploymentName] = 0
+			}
 
-		remainingDeploymentNames := make(map[string]struct{})
-		for _, deployment := range deployments.Items {
-			remainingDeploymentNames[deployment.Name] = struct{}{}
-		}
-
-		for deploymentName := range deletedDeployments {
-			if _, exists := remainingDeploymentNames[deploymentName]; !exists {
-				if _, exists := finalizedDeployments[deploymentName]; !exists {
-					finalizedDeployments[deploymentName] = time.Now()
+			deploymentName := pod.Labels["app"]
+			if _, ok := terminatedPods[deploymentName]; !ok {
+				if deletionTime := pod.DeletionTimestamp; deletionTime != nil {
+					terminatedPods[deploymentName] = deletionTime.Time
 				}
 			}
 		}
+
+		for deploymentName := range deletedDeployments {
+			_, exists := stillActiveDeployments[deploymentName]
+			if !exists {
+				cleanedPods[deploymentName] = time.Now()
+				delete(deletedDeployments, deploymentName)
+			}
+		}
+
+		if len(pods.Items) == 0 {
+			fmt.Println("No more pods left, stop loop")
+			break
+		}
 	}
 
-	return finalizedDeployments, nil
+	return terminatedPods, cleanedPods, nil
 }
 
-func undeployOCM() (map[string]time.Time, error) {
+func undeployKarmada() (map[string]time.Time, error) {
 	dir := "./deploymentFiles"
 	deletedDeployments := deleteYAMLFilesInFolder(dir)
 
 	return deletedDeployments, nil
 }
 
-func writeInfoToCSV(csvName string, deploymentInfos map[string]DeploymentInfo, deletedDeployments map[string]time.Time, finalizedDeployments map[string]time.Time) {
+func writeInfoToCSV(csvName string, deploymentInfos map[string]DeploymentInfo, deletedDeployments map[string]time.Time, terminatedPods map[string]time.Time, cleanedPods map[string]time.Time) {
 	file, err := os.Create(csvName)
 	if err != nil {
 		log.Fatal("Cannot create file", err)
@@ -214,17 +267,21 @@ func writeInfoToCSV(csvName string, deploymentInfos map[string]DeploymentInfo, d
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
-	writer.Write([]string{"DeploymentName", "PodName", "DeploymentTime", "Initialized", "PodScheduled", "ContainersReady", "Ready", "DeleteTime", "FinalizeDeletionTime"})
+	writer.Write([]string{"DeploymentName", "PodName", "DeploymentTime", "Initialized", "PodScheduled", "ContainersReady", "Ready", "DeleteTime", "TerminationTime", "CleanUpTime"})
 
-	var finalizedTime time.Time
+	var terminatedTime time.Time
+	var cleanUpTime time.Time
 
 	for key, deploymentInfo := range deploymentInfos {
 		if deletedTime, exists := deletedDeployments[key]; exists {
 
-			if finalizedTime, exists = finalizedDeployments[key]; !exists {
-				finalizedTime = deletedTime
+			// If some values did not get saved.
+			if terminatedTime, exists = terminatedPods[key]; !exists {
+				terminatedTime = deletedTime
 			}
-
+			if cleanUpTime, exists = cleanedPods[key]; !exists {
+				cleanUpTime = terminatedTime
+			}
 			err := writer.Write([]string{
 				key,
 				deploymentInfo.PodInfo.Name,
@@ -234,7 +291,8 @@ func writeInfoToCSV(csvName string, deploymentInfos map[string]DeploymentInfo, d
 				deploymentInfo.PodInfo.ContainersReady,
 				deploymentInfo.PodInfo.Ready,
 				deletedTime.Format(time.RFC3339),
-				finalizedTime.Format(time.RFC3339),
+				terminatedTime.Format(time.RFC3339),
+				cleanUpTime.Format(time.RFC3339),
 			})
 
 			if err != nil {
@@ -284,59 +342,81 @@ func getDeploymentInfo(deploymentInfos map[string]DeploymentInfo) map[string]Dep
 }
 
 const yamlTemplate = `
-apiVersion: work.open-cluster-management.io/v1
-kind: ManifestWork
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  namespace: cluster1
-  name: {{ .ManifestName }}
+  name: {{ .Name }}
+  labels:
+    app: {{ .Name }}
+    evaluation: test
 spec:
-  workload:
-    manifests:
-      - apiVersion: v1
-        kind: ServiceAccount
-        metadata:
-          namespace: default
-          name: {{ .ServiceAccount }}
-      - apiVersion: apps/v1
-        kind: Deployment
-        metadata:
-          namespace: default
-          name: {{ .Name }}
-          labels:
-            app: {{ .Name }}
-        spec:
-          replicas: 1
-          selector:
-            matchLabels:
-              app: {{ .Name }}
-          template:
-            metadata:
-              labels:
-                app: {{ .Name }}
-            spec:
-              serviceAccountName: {{ .ServiceAccount }}
-              containers:
-                - name: gosigterm
-                  image: ghcr.io/jakobke/oakestra/go-sigterm:latest
-                  
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Name }}
+      evaluation: test
+  template:
+    metadata:
+      labels:
+        app: {{ .Name }}
+        evaluation: test
+    spec:
+      containers:
+      - image: ghcr.io/jakobke/oakestra/go-sigterm:latest  
+        name: gosigterm
+		readinessProbe: # Fügen Sie hier die Readiness-Probe hinzu
+                    httpGet:
+                      path: "/ready"
+                      port: 7070
+                    initialDelaySeconds: 0
+                    periodSeconds: 1
+                    successThreshold: 1
+
+---
+
+apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+  name: nginx-propagation
+spec:
+  resourceSelectors:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: nginx
+  placement:
+    clusterAffinity:
+      clusterNames:
+        - member1
+        - member2
+    replicaScheduling:
+      replicaDivisionPreference: Weighted
+      replicaSchedulingType: Divided
+      weightPreference:
+        staticWeightList:
+          - targetCluster:
+              clusterNames:
+                - member1
+            weight: 1
+          - targetCluster:
+              clusterNames:
+                - member2
+            weight: 1
+
+
 `
 
 type Config struct {
-	Name           string
-	ServiceAccount string
-	ManifestName   string
+	Name string
 }
 
-func createOCMYAML(name, serviceAccount, manifestName string) (string, error) {
+func createKarmadaYAML(name string) (string, error) {
 	tmpl, err := template.New("yaml").Parse(yamlTemplate)
 	if err != nil {
 		return "", fmt.Errorf("failed to create template: %w", err)
 	}
 
 	config := Config{
-		Name:           name,
-		ServiceAccount: serviceAccount,
-		ManifestName:   manifestName,
+		Name: name,
 	}
 
 	var output strings.Builder

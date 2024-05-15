@@ -1,0 +1,84 @@
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  namespace: cluster1
+  name:  management-overhead-client
+spec:
+  workload:
+    manifests:
+      - apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          namespace: default
+          name: my-sa
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          namespace: default
+          name: management-overhead-client
+          labels:
+            app: management-overhead-client
+        spec:
+          replicas: 10
+          selector:
+            matchLabels:
+              app: management-overhead-client
+          template:
+            metadata:
+              labels:
+                app: management-overhead-client
+            spec:
+              serviceAccountName: my-sa
+              containers:
+                - name: management-overhead-client
+                  image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
+                  ports:
+                    - containerPort: 80
+                  env:  
+                  - name: NUM_PROGRAMS
+                    value: "10"  
+                  - name: DURATION_IN_SECONDS
+                    value: "60"  
+                  - name: SERVICE_URL
+                    value: "management-overhead.default.svc.cluster.local"
+
+
+---
+
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  namespace: cluster1
+  name: management-overhead-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          namespace: default
+          name: my-sa
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          namespace: default
+          name: management-overhead-server
+          labels:
+            app: management-overhead-server
+        spec:
+          replicas: 10
+          selector:
+            matchLabels:
+              app: management-overhead-server
+          template:
+            metadata:
+              labels:
+                app: management-overhead-server
+            spec:
+              serviceAccountName: my-sa
+              containers:
+                - name: management-overhead-server
+                  image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
+                  ports:
+                    - containerPort: 7070
+                    
