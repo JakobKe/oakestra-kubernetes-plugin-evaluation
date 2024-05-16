@@ -1,0 +1,1 @@
+Dieses Skript dient, um RAM und Memory im Oakestra Root auszulesen. 
