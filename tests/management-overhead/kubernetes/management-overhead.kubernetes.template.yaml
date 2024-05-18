@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-client
+spec:
+  replicas: {{ .Replicas }}
+  selector:
+    matchLabels:
+      app: management-overhead-client
+  template:
+    metadata:
+      labels:
+        app: management-overhead-client
+    spec:
+      containers:
+      - name: management-overhead-client
+        image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
+        imagePullPolicy: Always 
+        env:  
+        - name: NUM_PROGRAMS
+          value: "{{ .VU }}"  
+        - name: DURATION_IN_SECONDS
+          value: "{{ .Duration }}"  
+        - name: SERVICE_URL
+          value: "{{ .ServerIP }}" 
+
+--- 
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-server
+spec:
+  replicas: {{ .Replicas }}
+  selector:
+    matchLabels:
+      app: management-overhead-server
+  template:
+    metadata:
+      labels:
+        app: management-overhead-server
+    spec:
+      containers:
+      - name: management-overhead-server
+        image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
+        imagePullPolicy: Always 
+    

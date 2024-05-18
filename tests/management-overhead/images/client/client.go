@@ -48,9 +48,10 @@ func main() {
 	}
 
 	fmt.Println("Env Variables loaded, waiting for Server to start")
-	time.Sleep(20 * time.Second)
+	time.Sleep(5 * time.Second)
 	var wg sync.WaitGroup
 
+	fmt.Println("Start artificial traffic...")
 	for i := 0; i < numPrograms; i++ {
 		wg.Add(1)
 		go func() {
@@ -65,18 +66,17 @@ func main() {
 }
 
 func runLoadTest() {
-	duration := time.Duration(durationInSeconds) * time.Second
-
-	start := time.Now()
-
 	url := "http://" + serviceURL + ":7070/generate-load"
-	for time.Since(start) < duration {
+
+	// duration := time.Duration(durationInSeconds) * time.Second
+	// start := time.Now()
+	// for time.Since(start) < duration {
+	for {
 		_, err := http.Get(url)
 		if err != nil {
 			fmt.Println("Fehler beim Senden der HTTP-Anfrage:", err)
 		}
 
-		// Warte eine Sekunde, um die Last zu verteilen
 		time.Sleep(1 * time.Second)
 	}
 

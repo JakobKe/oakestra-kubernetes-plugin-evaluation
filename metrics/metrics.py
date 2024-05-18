@@ -5,27 +5,33 @@ import os
 from datetime import datetime, timedelta
 
 
+
 PROMETHEUS_URL = 'http://localhost:9090/api/v1/query_range'
-QUERY = 'sum(rate(container_network_transmit_packets_total[5m])) by (container, pod, namespace)'
+STEP = '1s'
+
+# Defined dataframe with start point. 
+# start_time_str = "2024-05-17 16:28:04.964223 +0200"
+# START_TIME = datetime.strptime(start_time_str, "%Y-%m-%d %H:%M:%S.%f %z")
+# START_TIME = START_TIME.replace(microsecond=0)
+# END_TIME = START_TIME + timedelta(minutes=5)
+
+
+# Most recent time
 END_TIME = datetime.now()
 START_TIME = END_TIME - timedelta(minutes=5)
-STEP = '1s'
-CSV_FILE = 'prometheus_data_1.csv'
 
+print("START_TIME:", START_TIME)
+print("END_TIME:", END_TIME)
 
-def query_prometheus(query, prometheus_url='http://localhost:9090'):
-    response = requests.get(f'{prometheus_url}/api/v1/query', params={'query': query})
-    response.raise_for_status()
-    return response.json()
 
 def query_prometheus_interval(query):
-    """Holt Daten von Prometheus."""
     response = requests.get(PROMETHEUS_URL, params={
         'query': query,
         'start': START_TIME.timestamp(),
         'end': END_TIME.timestamp(),
         'step': STEP
     })
+    
     response.raise_for_status()
     return response.json()
 
@@ -76,104 +82,106 @@ def main():
     ###############################
     directory = 'results/cpu_nodes'  
     
-    query = 'avg(rate(node_cpu_seconds_total[5m]))'
+    query = 'sum(rate(node_cpu_seconds_total[1m]))'
     filename = 'nodes_cpu_seconds_total_5m.csv'  
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
     
-    query = 'avg by (instance) (rate(node_cpu_seconds_total[5m]))'
+    query = 'sum by (instance) (rate(node_cpu_seconds_total[1m]))'
     filename = 'node_cpu_seconds_total_5m_by_instance.csv'  
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
     
-    query = 'avg(rate(node_cpu_seconds_total{mode="idle"}[5m]))'
+    query = 'sum(rate(node_cpu_seconds_total{mode="idle"}[1m]))'
     filename = 'nodes_cpu_seconds_idle_5m.csv'  
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
     
-    query = 'avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m]))'
+    query = 'sum by (instance) (rate(node_cpu_seconds_total{mode="idle"}[1m]))'
     filename = 'node_cpu_seconds_idle_5m_by_instance.csv'  
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
-    
-    
-    query = 'avg(rate(container_cpu_usage_seconds_total[5m]))'
-    filename = 'container_cpu_seconds_total_5m.csv'  
-    data = query_prometheus_interval(query)
-    save_to_csv(data, directory, filename)
-    
-    query = 'avg by (instance, pod) (rate(container_cpu_usage_seconds_total[5m]))'
+        
+    query = 'sum by (instance, pod) (rate(container_cpu_usage_seconds_total[1m]))'
     filename = 'container_cpu_seconds_total_5m_by_instance.csv'  
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
     
     
 
-    
     ###############################
     ## MEMORY NODE
     ###############################
     directory = 'results/memory_node'  
     
-    query = 'avg by (instance)(container_memory_usage_bytes)'
-    filename = 'container_memory_usage_bytes_by_instance.csv'  
+    query = 'sum by (instance)(container_memory_working_set_bytes)'
+    filename = 'container_memory_working_set_bytes_by_instance.csv'  
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
     
-    query = 'avg by (instance, pod) (container_memory_usage_bytes)'
-    filename = 'container_memory_usage_bytes_by_instance_and_pod.csv'  
+    query = 'avg by (instance, pod) (container_memory_working_set_bytes)'
+    filename = 'container_memory_working_set_bytes_by_instance_and_pod.csv'  
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
-    
     
     query = 'avg by (instance) ((node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100)'
     filename = 'node_memory_used_by_instance.csv'  
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
     
+    
     ###############################
-    ## MEMORY CONTAINER
+    ## MEMORY CONTAINER/POD
     ###############################
     directory = 'results/memory_container' 
-    SELECTED_PODS = "kube-apiserver.*|metrics-server.*"
-    SELECTED_NAMESPACE = "default|kube-system" 
+    # SELECTED_PODS = "karmada-agent.*"
+    # SELECTED_NAMESPACE = "karmada-system" 
+    
+    SELECTED_PODS = "klusterlet.*"
+    SELECTED_NAMESPACE = "open-cluster-management.*" 
+    
 
-    query = f'avg(container_memory_usage_bytes{{pod=~"{SELECTED_PODS}", namespace=~"{SELECTED_NAMESPACE}"}}) by (pod, namespace)'
-    filename = f'container_memory_usage_bytes--pods:{SELECTED_PODS}.csv'
+    query = f'sum(container_memory_working_set_bytes{{pod=~"{SELECTED_PODS}", namespace=~"{SELECTED_NAMESPACE}"}}) by (pod, namespace)'
+    filename = f'container_memory_working_set_bytes--pods:{SELECTED_PODS}.csv'
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
     
-    query = f'avg(avg_over_time(container_memory_usage_bytes{{pod=~"{SELECTED_PODS}"}}[5m]))'
-    filename = f'sum_selected_container_memory_usage_bytes--pods:{SELECTED_PODS}.csv'
+    # Hier hat nur der letzte Wert den gesamten Testlauf drin. 
+    query = f'sum(avg_over_time(container_memory_working_set_bytes{{pod=~"{SELECTED_PODS}"}}[5m]))'
+    filename = f'sum_selected_container_memory_working_set_bytes--pods:{SELECTED_PODS}.csv'
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
     
-    query = f'avg by (pod, namespace) (avg_over_time(container_memory_usage_bytes{{pod=~"{SELECTED_PODS}"}}[5m]))'
-    filename = f'selected_container_memory_usage_bytes--pods:{SELECTED_PODS}.csv'
+    # Hier hat nur der letzte Wert den gesamten Testlauf drin. 
+    query = f'sum by (pod, namespace) (avg_over_time(container_memory_working_set_bytes{{pod=~"{SELECTED_PODS}"}}[5m]))'
+    filename = f'selected_container_memory_working_set_bytes--pods:{SELECTED_PODS}.csv'
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
-    
     
     
     
     ###############################
-    ## CPU CONTAINER
+    ## CPU CONTAINER/POD
     ###############################
     directory = 'results/cpu_container'
-    SELECTED_PODS = "kube-apiserver.*|metrics-server.*"
-    SELECTED_NAMESPACE = "default|kube-system" 
+    # SELECTED_PODS = "karmada-agent.*"
+    # SELECTED_NAMESPACE = "karmada-system"
     
-    query = 'sum(rate(container_cpu_usage_seconds_total[5m]))'
+    SELECTED_PODS = "klusterlet.*"
+    SELECTED_NAMESPACE = "open-cluster-management.*"  
+    
+    query = 'sum(rate(container_cpu_usage_seconds_total[1m]))'
     filename = 'container_cpu_usage_seconds_total.csv'  
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
     
-    query = 'sum by (pod) (rate(container_cpu_usage_seconds_total[5m]))'
+    query = 'sum by (pod, namespace) (rate(container_cpu_usage_seconds_total[1m]))'
     filename = 'container_cpu_usage_seconds_total_per_pod.csv'  
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
     
-    query = f'sum by (pod) (rate(container_cpu_usage_seconds_total{{pod=~"{SELECTED_PODS}"}}[5m]))'
+    # Redundant!
+    query = f'sum by (pod, namespace) (rate(container_cpu_usage_seconds_total{{pod=~"{SELECTED_PODS}"}}[1m]))'
     filename = f'container_cpu_usage_seconds_total--pods:{SELECTED_PODS}.csv'  
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
@@ -188,22 +196,22 @@ def main():
     ###############################
     directory = 'results/network' 
     
-    query = 'sum(rate(container_network_transmit_packets_total[5m])) by (container, pod, namespace)'
+    query = 'sum(rate(container_network_transmit_packets_total[1m])) by (container, pod, namespace)'
     filename = 'network_transmit_packets.csv'  
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
 
-    query = 'sum(rate(container_network_transmit_bytes_total[5m])) by (container, pod, namespace)'
+    query = 'sum(rate(container_network_transmit_bytes_total[1m])) by (container, pod, namespace)'
     filename = 'network_transmit_bytes.csv'  
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
     
-    query = 'sum(rate(container_network_receive_packets_total[5m])) by (container, pod, namespace)'
+    query = 'sum(rate(container_network_receive_packets_total[1m])) by (container, pod, namespace)'
     filename = 'network_received_packets.csv'  
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
 
-    query = 'sum(rate(container_network_receive_bytes_total[5m])) by (container, pod, namespace)'
+    query = 'sum(rate(container_network_receive_bytes_total[1m])) by (container, pod, namespace)'
     filename = 'network_received_bytes.csv'  
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
@@ -217,16 +225,16 @@ def main():
     directory = 'results/api_metrics' 
     
     
-    query = f'avg(container_memory_usage_bytes{{pod=~"{SELECTED_PODS}"}}) by (pod, namespace)'
-    filename = f'container_memory_usage_bytes--pods:{SELECTED_PODS}.csv'
+    query = f'sum by (pod, namespace) (rate(container_cpu_usage_seconds_total{{pod=~"{SELECTED_PODS}"}}[1m]))'
+    filename = f'container_cpu_usage_seconds_total--pods:{SELECTED_PODS}.csv'  
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
     
-    query = f'sum(avg_over_time(container_memory_usage_bytes{{pod=~"{SELECTED_PODS}"}}[5m])) by (pod, namespace)'
-    filename = 'sum_container_memory_usage_bytes--pods:{SELECTED_PODS}.csv'
+    query = f'sum(container_memory_working_set_bytes{{pod=~"{SELECTED_PODS}", namespace=~"{SELECTED_NAMESPACE}"}}) by (pod, namespace)'
+    filename = f'container_memory_working_set_bytes--pods:{SELECTED_PODS}.csv'
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
-    
+        
     
 
 if __name__ == '__main__':

@@ -1,0 +1,46 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy-undeploy-test-93
+  labels:
+    app: deploy-undeploy-test-93
+    evaluation: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deploy-undeploy-test-93
+      evaluation: test
+  template:
+    metadata:
+      labels:
+        app: deploy-undeploy-test-93
+        evaluation: test
+    spec:
+      containers:
+      - image: ghcr.io/jakobke/oakestra/go-sigterm:latest  
+        name: gosigterm
+        readinessProbe:
+          httpGet:
+            path: "/ready"
+            port: 7070
+          initialDelaySeconds: 0
+          periodSeconds: 1
+          successThreshold: 1
+
+---
+
+apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+  name: deploy-undeploy-test-93-propagation
+spec:
+  resourceSelectors:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: deploy-undeploy-test-93
+  placement:
+    clusterAffinity:
+      clusterNames:
+        - kubernetes

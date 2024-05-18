@@ -24,12 +24,13 @@ var (
 )
 
 type PodInfo struct {
-	Name            string
-	ReadyToStart    string
-	Initialized     string
-	Ready           string
-	ContainersReady string
-	PodScheduled    string
+	Name                      string
+	ReadyToStart              string
+	Initialized               string
+	Ready                     string
+	ContainersReady           string
+	PodScheduled              string
+	PodReadyToStartContainers string
 }
 
 type UndeploymentInfo struct {
@@ -46,7 +47,8 @@ type DeploymentInfo struct {
 func main() {
 	createK8SClient()
 
-	numDeployments := 100
+	numDeployments := 300
+	fileName := fmt.Sprintf("5_kubernetes_deploy_undeploy_%d.csv", numDeployments)
 
 	replicas := int32(1)
 
@@ -61,7 +63,6 @@ func main() {
 	for key := range deploymentInfos {
 		copy[key] = 0
 	}
-	terminatedPodsChan := make(chan map[string]time.Time)
 	cleanedPodsChan := make(chan map[string]time.Time)
 	deletedDeploymentsChan := make(chan map[string]time.Time)
 	errChan := make(chan error)
@@ -72,13 +73,12 @@ func main() {
 	go func() {
 		defer wg.Done()
 		fmt.Println("Routine get Informations starts...")
-		terminatedPods, cleanedPods, err := getFinalizedDeployments(copy)
+		cleanedPods, err := getFinalizedDeployments(copy)
 		if err != nil {
 			errChan <- err
 			return
 		}
 
-		terminatedPodsChan <- terminatedPods
 		cleanedPodsChan <- cleanedPods
 	}()
 
@@ -95,13 +95,11 @@ func main() {
 
 	go func() {
 		wg.Wait()
-		close(terminatedPodsChan)
 		close(cleanedPodsChan)
 		close(deletedDeploymentsChan)
 		close(errChan)
 	}()
 
-	terminatedPods := <-terminatedPodsChan
 	cleanedPods := <-cleanedPodsChan
 	deletedDeployments := <-deletedDeploymentsChan
 	err := <-errChan
@@ -110,7 +108,8 @@ func main() {
 	}
 
 	fmt.Println("Write to CSV")
-	writeInfoToCSV("kubernetes.deploy.undeploy.csv", deploymentInfos, deletedDeployments, terminatedPods, cleanedPods)
+
+	writeInfoToCSV(fileName, deploymentInfos, deletedDeployments, cleanedPods)
 
 }
 
@@ -132,7 +131,7 @@ func createK8SClient() {
 func deploy(numDeployments int, replicas int32) map[string]DeploymentInfo {
 	deploymentInfos := make(map[string]DeploymentInfo)
 	for i := 1; i <= numDeployments; i++ {
-		deploymentName := fmt.Sprintf("nginx-deployment-%d", i)
+		deploymentName := fmt.Sprintf("deploy-test-%d", i)
 		deploymentsClient := clientset.AppsV1().Deployments(apiv1.NamespaceDefault)
 
 		deployment := &appsv1.Deployment{
@@ -193,8 +192,7 @@ func deploy(numDeployments int, replicas int32) map[string]DeploymentInfo {
 	return deploymentInfos
 }
 
-func getFinalizedDeployments(deletedDeployments map[string]int) (map[string]time.Time, map[string]time.Time, error) {
-	terminatedPods := map[string]time.Time{}
+func getFinalizedDeployments(deletedDeployments map[string]int) (map[string]time.Time, error) {
 	cleanedPods := map[string]time.Time{}
 
 	for {
@@ -203,23 +201,13 @@ func getFinalizedDeployments(deletedDeployments map[string]int) (map[string]time
 		})
 		if err != nil {
 			log.Printf("Error getting pods for finalized Information: %v\n", err)
-			return nil, nil, err
+			return nil, err
 		}
 
 		stillActiveDeployments := make(map[string]int, len(pods.Items))
 		for _, pod := range pods.Items {
 			if deploymentName, ok := pod.Labels["app"]; ok {
 				stillActiveDeployments[deploymentName] = 0
-
-				if _, ok := terminatedPods[deploymentName]; !ok {
-					if deletionTime := pod.DeletionTimestamp; deletionTime != nil {
-						terminatedPods[deploymentName] = deletionTime.Time
-						duration := time.Since(deletionTime.Time)
-
-						// Gib die Differenz aus
-						fmt.Printf("Differenz: %v\n", duration)
-					}
-				}
 			}
 		}
 
@@ -237,7 +225,7 @@ func getFinalizedDeployments(deletedDeployments map[string]int) (map[string]time
 		}
 	}
 
-	return terminatedPods, cleanedPods, nil
+	return cleanedPods, nil
 }
 
 func undeploy(numDeployments int) (map[string]time.Time, error) {
@@ -245,7 +233,7 @@ func undeploy(numDeployments int) (map[string]time.Time, error) {
 	deletedDeployments := map[string]time.Time{}
 
 	for i := 1; i <= numDeployments; i++ {
-		deploymentName := fmt.Sprintf("nginx-deployment-%d", i)
+		deploymentName := fmt.Sprintf("deploy-test-%d", i)
 		err := deploymentsClient.Delete(context.TODO(), deploymentName, metav1.DeleteOptions{})
 		if err != nil {
 			log.Printf("error deleting deployment %s: %v", deploymentName, err)
@@ -257,7 +245,7 @@ func undeploy(numDeployments int) (map[string]time.Time, error) {
 	return deletedDeployments, nil
 }
 
-func writeInfoToCSV(csvName string, deploymentInfos map[string]DeploymentInfo, deletedDeployments map[string]time.Time, terminatedPods map[string]time.Time, cleanedPods map[string]time.Time) {
+func writeInfoToCSV(csvName string, deploymentInfos map[string]DeploymentInfo, deletedDeployments map[string]time.Time, cleanedPods map[string]time.Time) {
 	file, err := os.Create(csvName)
 	if err != nil {
 		log.Fatal("Cannot create file", err)
@@ -267,31 +255,25 @@ func writeInfoToCSV(csvName string, deploymentInfos map[string]DeploymentInfo, d
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
-	writer.Write([]string{"DeploymentName", "PodName", "DeploymentTime", "Initialized", "PodScheduled", "ContainersReady", "Ready", "DeleteTime", "TerminationTime", "CleanUpTime"})
-
-	var terminatedTime time.Time
+	writer.Write([]string{"DeploymentName", "PodName", "DeploymentTime", "PodScheduled", "Initialized", "PodReadyToStartContainers", "ContainersReady", "Ready", "DeleteTime", "CleanUpTime"})
 	var cleanUpTime time.Time
 
 	for key, deploymentInfo := range deploymentInfos {
 		if deletedTime, exists := deletedDeployments[key]; exists {
 
-			// If some values did not get saved.
-			if terminatedTime, exists = terminatedPods[key]; !exists {
-				terminatedTime = deletedTime
-			}
 			if cleanUpTime, exists = cleanedPods[key]; !exists {
-				cleanUpTime = terminatedTime
+				cleanUpTime = deletedTime
 			}
 			err := writer.Write([]string{
 				key,
 				deploymentInfo.PodInfo.Name,
 				deploymentInfo.DeploymentTime.Format(time.RFC3339),
-				deploymentInfo.PodInfo.Initialized,
 				deploymentInfo.PodInfo.PodScheduled,
+				deploymentInfo.PodInfo.Initialized,
+				deploymentInfo.PodInfo.PodReadyToStartContainers,
 				deploymentInfo.PodInfo.ContainersReady,
 				deploymentInfo.PodInfo.Ready,
 				deletedTime.Format(time.RFC3339),
-				terminatedTime.Format(time.RFC3339),
 				cleanUpTime.Format(time.RFC3339),
 			})
 
@@ -327,6 +309,8 @@ func getDeploymentInfo(deploymentInfos map[string]DeploymentInfo) map[string]Dep
 					podInfo.ContainersReady = fmt.Sprint(condition.LastTransitionTime.Time)
 				case apiv1.PodScheduled:
 					podInfo.PodScheduled = fmt.Sprint(condition.LastTransitionTime.Time)
+				case apiv1.PodReadyToStartContainers:
+					podInfo.PodReadyToStartContainers = fmt.Sprint(condition.LastTransitionTime.Time)
 				}
 			}
 

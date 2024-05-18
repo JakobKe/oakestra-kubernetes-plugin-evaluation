@@ -10,3 +10,12 @@ To utilize this repository effectively, users are required to construct their ow
 
 This repository serves as an essential component for the evaluation of Jakob Kempter's Master's thesis. The tests conducted herein will contribute significantly to the assessment of the thesis's objectives and outcomes.
 
+
+
+Cooldown von 60 Sekunden sind wichtig! 
+Image wird nicht gelöscht, das darf im cache liegen bleiben. 
+
+
+karmadactl muss installiert sein!
+Es muss auch die Karmada Config sichtbar sein. 
+

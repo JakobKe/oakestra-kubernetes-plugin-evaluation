@@ -25,12 +25,13 @@ var (
 )
 
 type PodInfo struct {
-	Name            string
-	ReadyToStart    string
-	Initialized     string
-	Ready           string
-	ContainersReady string
-	PodScheduled    string
+	Name                      string
+	ReadyToStart              string
+	Initialized               string
+	Ready                     string
+	ContainersReady           string
+	PodScheduled              string
+	PodReadyToStartContainers string
 }
 
 type UndeploymentInfo struct {
@@ -47,20 +48,20 @@ type DeploymentInfo struct {
 func main() {
 	createK8SClient()
 
-	numDeployments := 3
+	numDeployments := 100
 
 	fmt.Println("Start Deployment...")
 	deploymentInfos := deployKarmada(numDeployments)
 
 	fmt.Println("Timer starts...")
-	time.Sleep(5 * time.Second)
+	time.Sleep(20 * time.Second)
 	deploymentInfos = getDeploymentInfo(deploymentInfos)
 
 	copy := make(map[string]int)
 	for key := range deploymentInfos {
 		copy[key] = 0
 	}
-	terminatedPodsChan := make(chan map[string]time.Time)
+
 	cleanedPodsChan := make(chan map[string]time.Time)
 	deletedDeploymentsChan := make(chan map[string]time.Time)
 	errChan := make(chan error)
@@ -71,13 +72,12 @@ func main() {
 	go func() {
 		defer wg.Done()
 		fmt.Println("Routine get Informations starts...")
-		terminatedPods, cleanedPods, err := getFinalizedDeployments(copy)
+		cleanedPods, err := getFinalizedDeployments(copy)
 		if err != nil {
 			errChan <- err
 			return
 		}
 
-		terminatedPodsChan <- terminatedPods
 		cleanedPodsChan <- cleanedPods
 	}()
 
@@ -94,13 +94,11 @@ func main() {
 
 	go func() {
 		wg.Wait()
-		close(terminatedPodsChan)
 		close(cleanedPodsChan)
 		close(deletedDeploymentsChan)
 		close(errChan)
 	}()
 
-	terminatedPods := <-terminatedPodsChan
 	cleanedPods := <-cleanedPodsChan
 	deletedDeployments := <-deletedDeploymentsChan
 	err := <-errChan
@@ -109,7 +107,7 @@ func main() {
 	}
 
 	fmt.Println("Write to CSV")
-	writeInfoToCSV("kubernetes.deploy.undeploy.csv", deploymentInfos, deletedDeployments, terminatedPods, cleanedPods)
+	writeInfoToCSV("karmada.deploy.undeploy.csv", deploymentInfos, deletedDeployments, cleanedPods)
 }
 
 func createK8SClient() {
@@ -133,7 +131,7 @@ func deployKarmada(numDeployments int) map[string]DeploymentInfo {
 	os.MkdirAll(dir, 0755)
 
 	for i := 1; i <= numDeployments; i++ {
-		deploymentName := fmt.Sprintf("nginx-deployment-%d", i)
+		deploymentName := fmt.Sprintf("deploy-undeploy-test-%d", i)
 
 		yamlContent, err := createKarmadaYAML(deploymentName)
 		if err != nil {
@@ -165,7 +163,7 @@ func deleteYAMLFilesInFolder(folder string) map[string]time.Time {
 	for _, file := range files {
 
 		filePath := folder + "/" + file.Name()
-		execYAMLFile(filePath, "delete")
+		execYAMLFileKarmada(filePath, "delete")
 		deletedDeployments[file.Name()] = time.Now()
 
 	}
@@ -182,32 +180,27 @@ func applyYAMLFilesInFolder(folder string) map[string]DeploymentInfo {
 	}
 
 	for _, file := range files {
-
 		filePath := folder + "/" + file.Name()
-		execYAMLFile(filePath, "apply")
+		execYAMLFileKarmada(filePath, "apply")
 		deploymentInfos[file.Name()] = DeploymentInfo{
 			DeploymentTime: time.Now(),
 		}
-
 	}
 
 	return deploymentInfos
 }
 
-func execYAMLFile(filePath string, command string) {
-	fmt.Println(filePath)
-	cmd := exec.Command("kubectl", command, "-f", filePath)
+func execYAMLFileKarmada(filePath string, command string) {
+	cmd := exec.Command("sudo", "kubectl", "--kubeconfig", "./karmada.config", command, "-f", filePath)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println(output)
 		return
 	}
-
 }
 
-func getFinalizedDeployments(deletedDeployments map[string]int) (map[string]time.Time, map[string]time.Time, error) {
-	terminatedPods := map[string]time.Time{}
+func getFinalizedDeployments(deletedDeployments map[string]int) (map[string]time.Time, error) {
 	cleanedPods := map[string]time.Time{}
 
 	for {
@@ -216,20 +209,13 @@ func getFinalizedDeployments(deletedDeployments map[string]int) (map[string]time
 		})
 		if err != nil {
 			log.Printf("Error getting pods for finalized Information: %v\n", err)
-			return nil, nil, err
+			return nil, err
 		}
 
 		stillActiveDeployments := make(map[string]int, len(pods.Items))
 		for _, pod := range pods.Items {
 			if deploymentName, ok := pod.Labels["app"]; ok {
 				stillActiveDeployments[deploymentName] = 0
-			}
-
-			deploymentName := pod.Labels["app"]
-			if _, ok := terminatedPods[deploymentName]; !ok {
-				if deletionTime := pod.DeletionTimestamp; deletionTime != nil {
-					terminatedPods[deploymentName] = deletionTime.Time
-				}
 			}
 		}
 
@@ -247,7 +233,7 @@ func getFinalizedDeployments(deletedDeployments map[string]int) (map[string]time
 		}
 	}
 
-	return terminatedPods, cleanedPods, nil
+	return cleanedPods, nil
 }
 
 func undeployKarmada() (map[string]time.Time, error) {
@@ -257,7 +243,7 @@ func undeployKarmada() (map[string]time.Time, error) {
 	return deletedDeployments, nil
 }
 
-func writeInfoToCSV(csvName string, deploymentInfos map[string]DeploymentInfo, deletedDeployments map[string]time.Time, terminatedPods map[string]time.Time, cleanedPods map[string]time.Time) {
+func writeInfoToCSV(csvName string, deploymentInfos map[string]DeploymentInfo, deletedDeployments map[string]time.Time, cleanedPods map[string]time.Time) {
 	file, err := os.Create(csvName)
 	if err != nil {
 		log.Fatal("Cannot create file", err)
@@ -267,31 +253,27 @@ func writeInfoToCSV(csvName string, deploymentInfos map[string]DeploymentInfo, d
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
-	writer.Write([]string{"DeploymentName", "PodName", "DeploymentTime", "Initialized", "PodScheduled", "ContainersReady", "Ready", "DeleteTime", "TerminationTime", "CleanUpTime"})
+	writer.Write([]string{"DeploymentName", "PodName", "DeploymentTime", "PodScheduled", "Initialized", "PodReadyToStartContainers", "ContainersReady", "Ready", "DeleteTime", "CleanUpTime"})
 
-	var terminatedTime time.Time
 	var cleanUpTime time.Time
 
 	for key, deploymentInfo := range deploymentInfos {
 		if deletedTime, exists := deletedDeployments[key]; exists {
 
 			// If some values did not get saved.
-			if terminatedTime, exists = terminatedPods[key]; !exists {
-				terminatedTime = deletedTime
-			}
 			if cleanUpTime, exists = cleanedPods[key]; !exists {
-				cleanUpTime = terminatedTime
+				cleanUpTime = deletedTime
 			}
 			err := writer.Write([]string{
 				key,
 				deploymentInfo.PodInfo.Name,
 				deploymentInfo.DeploymentTime.Format(time.RFC3339),
-				deploymentInfo.PodInfo.Initialized,
 				deploymentInfo.PodInfo.PodScheduled,
+				deploymentInfo.PodInfo.Initialized,
+				deploymentInfo.PodInfo.PodReadyToStartContainers,
 				deploymentInfo.PodInfo.ContainersReady,
 				deploymentInfo.PodInfo.Ready,
 				deletedTime.Format(time.RFC3339),
-				terminatedTime.Format(time.RFC3339),
 				cleanUpTime.Format(time.RFC3339),
 			})
 
@@ -313,7 +295,6 @@ func getDeploymentInfo(deploymentInfos map[string]DeploymentInfo) map[string]Dep
 			continue
 		}
 		for _, pod := range pods.Items {
-			fmt.Println(pod.Name)
 			podInfo := PodInfo{
 				Name: pod.Name,
 			}
@@ -328,6 +309,8 @@ func getDeploymentInfo(deploymentInfos map[string]DeploymentInfo) map[string]Dep
 					podInfo.ContainersReady = fmt.Sprint(condition.LastTransitionTime.Time)
 				case apiv1.PodScheduled:
 					podInfo.PodScheduled = fmt.Sprint(condition.LastTransitionTime.Time)
+				case apiv1.PodReadyToStartContainers:
+					podInfo.PodReadyToStartContainers = fmt.Sprint(condition.LastTransitionTime.Time)
 				}
 			}
 
@@ -364,45 +347,29 @@ spec:
       containers:
       - image: ghcr.io/jakobke/oakestra/go-sigterm:latest  
         name: gosigterm
-		readinessProbe: # Fügen Sie hier die Readiness-Probe hinzu
-                    httpGet:
-                      path: "/ready"
-                      port: 7070
-                    initialDelaySeconds: 0
-                    periodSeconds: 1
-                    successThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: "/ready"
+            port: 7070
+          initialDelaySeconds: 0
+          periodSeconds: 1
+          successThreshold: 1
 
 ---
 
 apiVersion: policy.karmada.io/v1alpha1
 kind: PropagationPolicy
 metadata:
-  name: nginx-propagation
+  name: {{ .Name }}-propagation
 spec:
   resourceSelectors:
     - apiVersion: apps/v1
       kind: Deployment
-      name: nginx
+      name: {{ .Name }}
   placement:
     clusterAffinity:
       clusterNames:
-        - member1
-        - member2
-    replicaScheduling:
-      replicaDivisionPreference: Weighted
-      replicaSchedulingType: Divided
-      weightPreference:
-        staticWeightList:
-          - targetCluster:
-              clusterNames:
-                - member1
-            weight: 1
-          - targetCluster:
-              clusterNames:
-                - member2
-            weight: 1
-
-
+        - kubernetes
 `
 
 type Config struct {

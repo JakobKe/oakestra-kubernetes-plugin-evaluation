@@ -23,7 +23,7 @@
           "code": "ghcr.io/jakobke/oakestra/overhead-management-client:latest",
           "state": "",
           "added_files": [],
-          "environment": ["NUM_PROGRAMS=10", "DURATION_IN_SECONDS=60", "SERVICE_URL=management-overhead.default.svc.cluster.local" ]
+          "environment": ["NUM_PROGRAMS=10", "DURATION_IN_SECONDS=60", "SERVICE_URL=management-overhead.default.svc.cluster.local"]
         },
         {
           "microserviceID": "",
