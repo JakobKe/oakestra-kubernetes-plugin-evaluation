@@ -63,7 +63,7 @@ func main() {
 		Duration: 300,
 		Replicas: 10,
 		VU:       10,
-		ServerIP: "10.105.86.183",
+		ServerIP: "10.100.77.177",
 	}
 
 	content, _ := generateYAML(config, tempFilePath)

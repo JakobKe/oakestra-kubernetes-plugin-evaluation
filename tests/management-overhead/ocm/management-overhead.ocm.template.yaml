@@ -1,58 +1,11 @@
 apiVersion: work.open-cluster-management.io/v1
 kind: ManifestWork
 metadata:
-  namespace: {{ .ClusterName }}
-  name: {{ .Name }}
-spec:
-  workload:
-    manifests:
-      - apiVersion: apps/v1
-        kind: Deployment
-        metadata:
-          name: {{ .Name }}
-          labels:
-            app: {{ .Name }}
-            evaluation: test
-        spec:
-          replicas: 1
-          selector:
-            matchLabels:
-              app: {{ .Name }}
-              evaluation: test
-          template:
-            metadata:
-              labels:
-                app: {{ .Name }}
-                evaluation: test
-            spec:
-              containers:
-              - image: ghcr.io/jakobke/oakestra/go-sigterm:latest  
-                name: gosigterm
-                readinessProbe:
-                  httpGet:
-                    path: "/ready"
-                    port: 7070
-                  initialDelaySeconds: 0
-                  periodSeconds: 1
-                  successThreshold: 1
-
-
-                  
-
-
-apiVersion: work.open-cluster-management.io/v1
-kind: ManifestWork
-metadata:
-  namespace: cluster1
+  namespace: kubernetes-eval
   name:  management-overhead-client
 spec:
   workload:
     manifests:
-      - apiVersion: v1
-        kind: ServiceAccount
-        metadata:
-          namespace: default
-          name: management-overhead-client-sa
       - apiVersion: apps/v1
         kind: Deployment
         metadata:
@@ -70,7 +23,6 @@ spec:
               labels:
                 app: management-overhead-client
             spec:
-              serviceAccountName: management-overhead-client-sa
               containers:
                 - name: management-overhead-client
                   image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
@@ -78,11 +30,11 @@ spec:
                     - containerPort: 7070
                   env:  
                   - name: NUM_PROGRAMS
-                    value: "{{ .VU }}"  
+                    value: "{{ .VU }}"
                   - name: DURATION_IN_SECONDS
-                    value: "{{ .Duration }}"  
+                    value: "{{ .Duration }}"
                   - name: SERVICE_URL
-                    value: "{{ .ServerIP }}" 
+                    value: "{{ .ServerIP }}"
 
 
 ---
@@ -90,16 +42,11 @@ spec:
 apiVersion: work.open-cluster-management.io/v1
 kind: ManifestWork
 metadata:
-  namespace: cluster1
+  namespace: kubernetes-eval
   name: management-overhead-server
 spec:
   workload:
     manifests:
-      - apiVersion: v1
-        kind: ServiceAccount
-        metadata:
-          namespace: default
-          name: management-overhead-server-sa
       - apiVersion: apps/v1
         kind: Deployment
         metadata:
@@ -117,7 +64,7 @@ spec:
               labels:
                 app: management-overhead-server
             spec:
-              serviceAccountName: management-overhead-server-sa
+              
               containers:
                 - name: management-overhead-server
                   image: ghcr.io/jakobke/oakestra/overhead-management-server:latest

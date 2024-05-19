@@ -48,7 +48,7 @@ type DeploymentInfo struct {
 func main() {
 	createK8SClient()
 
-	numDeployments := 100
+	numDeployments := 2
 
 	fmt.Println("Start Deployment...")
 	deploymentInfos := deployOCM(numDeployments)

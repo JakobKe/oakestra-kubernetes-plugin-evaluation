@@ -22,7 +22,7 @@ spec:
         - name: DURATION_IN_SECONDS
           value: "300"  
         - name: SERVICE_URL
-          value: "10.105.86.183" 
+          value: "10.100.77.177" 
 
 --- 
 

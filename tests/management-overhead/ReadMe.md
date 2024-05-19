@@ -13,3 +13,6 @@ Beim Management Overhead nicht vergessen, den Service wieder zu löschen.
 
 
 Ich gehe hier nichr über den kubeclient für golang, sondern eifnach über das cli tool kubectl. Also führe einfach Befehle aus. 
+
+
+Die Service IP gebe ich immer an, da muss ich sicherstellen, dass ich die richtige verwende! 

@@ -10,15 +10,15 @@ PROMETHEUS_URL = 'http://localhost:9090/api/v1/query_range'
 STEP = '1s'
 
 # Defined dataframe with start point. 
-# start_time_str = "2024-05-17 16:28:04.964223 +0200"
-# START_TIME = datetime.strptime(start_time_str, "%Y-%m-%d %H:%M:%S.%f %z")
-# START_TIME = START_TIME.replace(microsecond=0)
-# END_TIME = START_TIME + timedelta(minutes=5)
+start_time_str = "2024-05-19 17:38:02.732487 +0200"
+START_TIME = datetime.strptime(start_time_str, "%Y-%m-%d %H:%M:%S.%f %z")
+START_TIME = START_TIME.replace(microsecond=0)
+END_TIME = START_TIME + timedelta(minutes=5)
 
 
-# Most recent time
-END_TIME = datetime.now()
-START_TIME = END_TIME - timedelta(minutes=5)
+# # Most recent time
+# END_TIME = datetime.now()
+# START_TIME = END_TIME - timedelta(minutes=5)
 
 print("START_TIME:", START_TIME)
 print("END_TIME:", END_TIME)
@@ -134,11 +134,11 @@ def main():
     ## MEMORY CONTAINER/POD
     ###############################
     directory = 'results/memory_container' 
-    # SELECTED_PODS = "karmada-agent.*"
-    # SELECTED_NAMESPACE = "karmada-system" 
+    SELECTED_PODS = "karmada-agent.*"
+    SELECTED_NAMESPACE = "karmada-system" 
     
-    SELECTED_PODS = "klusterlet.*"
-    SELECTED_NAMESPACE = "open-cluster-management.*" 
+    # SELECTED_PODS = "klusterlet.*"
+    # SELECTED_NAMESPACE = "open-cluster-management.*" 
     
 
     query = f'sum(container_memory_working_set_bytes{{pod=~"{SELECTED_PODS}", namespace=~"{SELECTED_NAMESPACE}"}}) by (pod, namespace)'
@@ -164,11 +164,11 @@ def main():
     ## CPU CONTAINER/POD
     ###############################
     directory = 'results/cpu_container'
-    # SELECTED_PODS = "karmada-agent.*"
-    # SELECTED_NAMESPACE = "karmada-system"
+    SELECTED_PODS = "karmada-agent.*"
+    SELECTED_NAMESPACE = "karmada-system"
     
-    SELECTED_PODS = "klusterlet.*"
-    SELECTED_NAMESPACE = "open-cluster-management.*"  
+    # SELECTED_PODS = "klusterlet.*"
+    # SELECTED_NAMESPACE = "open-cluster-management.*"  
     
     query = 'sum(rate(container_cpu_usage_seconds_total[1m]))'
     filename = 'container_cpu_usage_seconds_total.csv'  
