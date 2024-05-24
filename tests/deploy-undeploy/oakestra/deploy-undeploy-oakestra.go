@@ -25,9 +25,10 @@ import (
 
 var (
 	clientset            *kubernetes.Clientset
-	SYSTEM_MANAGER_URL   = "10.100.253.175:10000"
+	SYSTEM_MANAGER_URL   = "10.100.253.57:10000"
 	CLIENT_SERVICE_ID    = ""
 	DEPLOYMENT_BASE_NAME = ""
+	APP_NAME             = ""
 )
 
 type Application struct {
@@ -36,12 +37,13 @@ type Application struct {
 }
 
 type PodInfo struct {
-	Name            string
-	ReadyToStart    string
-	Initialized     string
-	Ready           string
-	ContainersReady string
-	PodScheduled    string
+	Name                      string
+	ReadyToStart              string
+	Initialized               string
+	Ready                     string
+	ContainersReady           string
+	PodScheduled              string
+	PodReadyToStartContainers string
 }
 
 type UndeploymentInfo struct {
@@ -59,8 +61,8 @@ func main() {
 	createK8SClient()
 	fmt.Println("Start Test Deploy-Undeploy Oakestra")
 
-	numberOfServices := 7
-	SLA_FILE := "./client-scheduler.json"
+	numberOfServices := 100
+	SLA_FILE := "./deploy-undeploy-scheduler.json"
 
 	deleteAllApps()
 
@@ -83,7 +85,7 @@ func main() {
 	CLIENT_SERVICE_ID = services[0]
 	deploymentInfos := deployOakestra(numberOfServices)
 
-	fmt.Println(deploymentInfos)
+	//fmt.Println(deploymentInfos)
 	// // Wait
 	// // Oakestra needs some time
 	fmt.Println("Oakestra is deploying")
@@ -95,7 +97,7 @@ func main() {
 	for key := range deploymentInfos {
 		copy[key] = 0
 	}
-	terminatedPodsChan := make(chan map[string]time.Time)
+
 	cleanedPodsChan := make(chan map[string]time.Time)
 	deletedDeploymentsChan := make(chan map[string]time.Time)
 	errChan := make(chan error)
@@ -106,13 +108,12 @@ func main() {
 	go func() {
 		defer wg.Done()
 		fmt.Println("Routine get Informations starts...")
-		terminatedPods, cleanedPods, err := getFinalizedDeployments(copy)
+		cleanedPods, err := getFinalizedDeployments(copy)
 		if err != nil {
 			errChan <- err
 			return
 		}
 
-		terminatedPodsChan <- terminatedPods
 		cleanedPodsChan <- cleanedPods
 	}()
 
@@ -126,13 +127,11 @@ func main() {
 
 	go func() {
 		wg.Wait()
-		close(terminatedPodsChan)
 		close(cleanedPodsChan)
 		close(deletedDeploymentsChan)
 		close(errChan)
 	}()
 
-	terminatedPods := <-terminatedPodsChan
 	cleanedPods := <-cleanedPodsChan
 	deletedDeployments := <-deletedDeploymentsChan
 	err := <-errChan
@@ -141,7 +140,7 @@ func main() {
 	}
 
 	fmt.Println("Write to CSV")
-	writeInfoToCSV("kubernetes.deploy.undeploy.csv", deploymentInfos, deletedDeployments, terminatedPods, cleanedPods)
+	writeInfoToCSV("oakestra.deploy.undeploy.csv", deploymentInfos, deletedDeployments, cleanedPods)
 }
 
 func createK8SClient() {
@@ -159,30 +158,21 @@ func createK8SClient() {
 	}
 }
 
-func getFinalizedDeployments(deletedDeployments map[string]int) (map[string]time.Time, map[string]time.Time, error) {
-	terminatedPods := map[string]time.Time{}
+func getFinalizedDeployments(deletedDeployments map[string]int) (map[string]time.Time, error) {
 	cleanedPods := map[string]time.Time{}
 
 	for {
-		pods, err := clientset.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{
-			LabelSelector: "evaluation=test",
+		pods, err := clientset.CoreV1().Pods("oakestra").List(context.TODO(), metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("applicationName=%s", APP_NAME),
 		})
 		if err != nil {
 			log.Printf("Error getting pods for finalized Information: %v\n", err)
-			return nil, nil, err
+			return nil, err
 		}
-
 		stillActiveDeployments := make(map[string]int, len(pods.Items))
 		for _, pod := range pods.Items {
 			if deploymentName, ok := pod.Labels["app"]; ok {
 				stillActiveDeployments[deploymentName] = 0
-			}
-
-			deploymentName := pod.Labels["app"]
-			if _, ok := terminatedPods[deploymentName]; !ok {
-				if deletionTime := pod.DeletionTimestamp; deletionTime != nil {
-					terminatedPods[deploymentName] = deletionTime.Time
-				}
 			}
 		}
 
@@ -200,10 +190,10 @@ func getFinalizedDeployments(deletedDeployments map[string]int) (map[string]time
 		}
 	}
 
-	return terminatedPods, cleanedPods, nil
+	return cleanedPods, nil
 }
 
-func writeInfoToCSV(csvName string, deploymentInfos map[string]DeploymentInfo, deletedDeployments map[string]time.Time, terminatedPods map[string]time.Time, cleanedPods map[string]time.Time) {
+func writeInfoToCSV(csvName string, deploymentInfos map[string]DeploymentInfo, deletedDeployments map[string]time.Time, cleanedPods map[string]time.Time) {
 	file, err := os.Create(csvName)
 	if err != nil {
 		log.Fatal("Cannot create file", err)
@@ -213,31 +203,27 @@ func writeInfoToCSV(csvName string, deploymentInfos map[string]DeploymentInfo, d
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
-	writer.Write([]string{"DeploymentName", "PodName", "DeploymentTime", "Initialized", "PodScheduled", "ContainersReady", "Ready", "DeleteTime", "TerminationTime", "CleanUpTime"})
+	writer.Write([]string{"DeploymentName", "PodName", "DeploymentTime", "PodScheduled", "Initialized", "PodReadyToStartContainers", "ContainersReady", "Ready", "DeleteTime", "CleanUpTime"})
 
-	var terminatedTime time.Time
 	var cleanUpTime time.Time
 
 	for key, deploymentInfo := range deploymentInfos {
 		if deletedTime, exists := deletedDeployments[key]; exists {
 
 			// If some values did not get saved.
-			if terminatedTime, exists = terminatedPods[key]; !exists {
-				terminatedTime = deletedTime
-			}
 			if cleanUpTime, exists = cleanedPods[key]; !exists {
-				cleanUpTime = terminatedTime
+				cleanUpTime = deletedTime
 			}
 			err := writer.Write([]string{
 				key,
 				deploymentInfo.PodInfo.Name,
 				deploymentInfo.DeploymentTime.Format(time.RFC3339),
-				deploymentInfo.PodInfo.Initialized,
 				deploymentInfo.PodInfo.PodScheduled,
+				deploymentInfo.PodInfo.Initialized,
+				deploymentInfo.PodInfo.PodReadyToStartContainers,
 				deploymentInfo.PodInfo.ContainersReady,
 				deploymentInfo.PodInfo.Ready,
 				deletedTime.Format(time.RFC3339),
-				terminatedTime.Format(time.RFC3339),
 				cleanUpTime.Format(time.RFC3339),
 			})
 
@@ -252,10 +238,9 @@ func getDeploymentInfoOakestra(deploymentInfos map[string]DeploymentInfo, namesp
 	for deploymentName, deploymentInfo := range deploymentInfos {
 
 		parts := strings.Split(deploymentName, ".")
-		appName := parts[0]
 		instanceNumber := parts[len(parts)-1]
 		pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
-			LabelSelector: fmt.Sprintf("applicationName=%s,instanceNumber=%s", appName, instanceNumber),
+			LabelSelector: fmt.Sprintf("applicationName=%s,instanceNumber=%s", APP_NAME, instanceNumber),
 		})
 		if err != nil {
 			log.Printf("Error getting pods for deployment %s: %v\n", deploymentName, err)
@@ -276,6 +261,8 @@ func getDeploymentInfoOakestra(deploymentInfos map[string]DeploymentInfo, namesp
 					podInfo.ContainersReady = fmt.Sprint(condition.LastTransitionTime.Time)
 				case apiv1.PodScheduled:
 					podInfo.PodScheduled = fmt.Sprint(condition.LastTransitionTime.Time)
+				case apiv1.PodReadyToStartContainers:
+					podInfo.PodReadyToStartContainers = fmt.Sprint(condition.LastTransitionTime.Time)
 				}
 			}
 
@@ -324,6 +311,8 @@ func getDeploymentBaseName(filename string) (string, error) {
 	ms := app.Microservices[0]
 	serviceName := ms.MicroserviceName
 	serviceNamespace := ms.MicroserviceNamespace
+
+	APP_NAME = appName
 
 	deploymentBaseName := fmt.Sprintf("%s.%s.%s.%s.", appName, appNamespace, serviceName, serviceNamespace)
 
@@ -426,6 +415,8 @@ func registerApp(deployment_descriptor map[string]interface{}) (string, []string
 		panic(err)
 	}
 
+	print(s)
+
 	var applications []Application
 	err = json.Unmarshal([]byte(s), &applications)
 	if err != nil {
@@ -441,6 +432,7 @@ func deployOakestra(numberOfServices int) map[string]DeploymentInfo {
 	deploymentInfos := make(map[string]DeploymentInfo)
 
 	url := fmt.Sprintf("http://%s/api/service/%s/instance", SYSTEM_MANAGER_URL, CLIENT_SERVICE_ID)
+	fmt.Println(url)
 
 	for i := 0; i < numberOfServices; i++ {
 
@@ -480,7 +472,6 @@ func undeployOakestra(numberOfServices int) map[string]time.Time {
 
 		url := fmt.Sprintf("http://%s/api/service/%s/instance/%d", SYSTEM_MANAGER_URL, CLIENT_SERVICE_ID, i)
 
-		fmt.Println(url)
 		req, err := http.NewRequest("DELETE", url, nil)
 		if err != nil {
 			fmt.Printf("Failed to create DELETE request: %v\n", err)

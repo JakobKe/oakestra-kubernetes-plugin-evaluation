@@ -7,12 +7,12 @@ def run_remote_command(ssh_client, command):
     return stdout.read().decode(), stderr.read().decode()
 
 def main():
-    hostname = "10.100.253.175"
+    hostname = "10.100.253.57"
     username = "ubuntu"
     key_path = "/Users/jakobkempter/.ssh/id_rsa_ics"
     remote_script = "/home/ubuntu/cpuram"
     remote_output = "/home/ubuntu/cpumemoryusage.csv"
-    test = "K5_O5"
+    test = "K0_O3"
     duration = 60  # Duration for each test run in seconds
     cool_down = 30  # Cool down phase in seconds (5 minutes)
     repititions = 5

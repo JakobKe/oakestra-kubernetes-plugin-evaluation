@@ -5,7 +5,7 @@ metadata:
   namespace: oakestra
 spec:
   selector:
-    app: management-overhead
+    microserviceName: overhead
   ports:
   - protocol: TCP
     port: 7070
