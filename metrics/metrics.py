@@ -134,8 +134,12 @@ def main():
     ## MEMORY CONTAINER/POD
     ###############################
     directory = 'results/memory_container' 
-    SELECTED_PODS = "karmada-agent.*"
-    SELECTED_NAMESPACE = "karmada-system" 
+    
+    SELECTED_PODS = ".*"
+    SELECTED_NAMESPACE = "oakestra.*" 
+    
+    # SELECTED_PODS = "karmada-agent.*"
+    # SELECTED_NAMESPACE = "karmada-system" 
     
     # SELECTED_PODS = "klusterlet.*"
     # SELECTED_NAMESPACE = "open-cluster-management.*" 
@@ -147,13 +151,13 @@ def main():
     save_to_csv(data, directory, filename)
     
     # Hier hat nur der letzte Wert den gesamten Testlauf drin. 
-    query = f'sum(avg_over_time(container_memory_working_set_bytes{{pod=~"{SELECTED_PODS}"}}[5m]))'
+    query = f'sum(avg_over_time(container_memory_working_set_bytes{{pod=~"{SELECTED_PODS}", namespace=~"{SELECTED_NAMESPACE}"}}[5m]))'
     filename = f'sum_selected_container_memory_working_set_bytes--pods:{SELECTED_PODS}.csv'
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
     
     # Hier hat nur der letzte Wert den gesamten Testlauf drin. 
-    query = f'sum by (pod, namespace) (avg_over_time(container_memory_working_set_bytes{{pod=~"{SELECTED_PODS}"}}[5m]))'
+    query = f'sum by (pod, namespace) (avg_over_time(container_memory_working_set_bytes{{pod=~"{SELECTED_PODS}", namespace=~"{SELECTED_NAMESPACE}"}}[5m]))'
     filename = f'selected_container_memory_working_set_bytes--pods:{SELECTED_PODS}.csv'
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
@@ -164,8 +168,13 @@ def main():
     ## CPU CONTAINER/POD
     ###############################
     directory = 'results/cpu_container'
-    SELECTED_PODS = "karmada-agent.*"
-    SELECTED_NAMESPACE = "karmada-system"
+    
+    SELECTED_PODS = ".*"
+    SELECTED_NAMESPACE = "oakestra.*" 
+    
+    
+    # SELECTED_PODS = "karmada-agent.*"
+    # SELECTED_NAMESPACE = "karmada-system"
     
     # SELECTED_PODS = "klusterlet.*"
     # SELECTED_NAMESPACE = "open-cluster-management.*"  
@@ -181,7 +190,7 @@ def main():
     save_to_csv(data, directory, filename)
     
     # Redundant!
-    query = f'sum by (pod, namespace) (rate(container_cpu_usage_seconds_total{{pod=~"{SELECTED_PODS}"}}[1m]))'
+    query = f'sum by (pod, namespace) (rate(container_cpu_usage_seconds_total{{pod=~"{SELECTED_PODS}", namespace=~"{SELECTED_NAMESPACE}"}}[1m]))'
     filename = f'container_cpu_usage_seconds_total--pods:{SELECTED_PODS}.csv'  
     data = query_prometheus_interval(query)
     save_to_csv(data, directory, filename)
