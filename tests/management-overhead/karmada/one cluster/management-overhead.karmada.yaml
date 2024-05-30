@@ -1,0 +1,858 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-client-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: management-overhead-client-1
+  template:
+    metadata:
+      labels:
+        app: management-overhead-client-1
+    spec:
+      containers:
+      - name: management-overhead-client
+        image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
+        imagePullPolicy: Always 
+        env:  
+        - name: NUM_PROGRAMS
+          value: "10"  
+        - name: DURATION_IN_SECONDS
+          value: "300"  
+        - name: SERVICE_URL
+          value: "10.99.144.18" 
+
+---
+
+apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+  name: management-overhead-client-propagation-1
+spec:
+  resourceSelectors:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: management-overhead-client-1
+  placement:
+    clusterAffinity:
+      clusterNames:
+        - kubernetes-2
+       
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-server-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: management-overhead-server-1
+  template:
+    metadata:
+      labels:
+        app: management-overhead-server-1
+        service: overhead
+    spec:
+      containers:
+      - name: management-overhead-server
+        image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
+        imagePullPolicy: Always 
+
+---
+
+apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+  name: management-overhead-server-propagation-1
+spec:
+  resourceSelectors:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: management-overhead-server-1
+  placement:
+    clusterAffinity:
+      clusterNames:
+        - kubernetes-2
+       
+
+
+--- 
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-client-2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: management-overhead-client-2
+  template:
+    metadata:
+      labels:
+        app: management-overhead-client-2
+    spec:
+      containers:
+      - name: management-overhead-client
+        image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
+        imagePullPolicy: Always 
+        env:  
+        - name: NUM_PROGRAMS
+          value: "10"  
+        - name: DURATION_IN_SECONDS
+          value: "300"  
+        - name: SERVICE_URL
+          value: "10.99.144.18" 
+
+---
+
+apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+  name: management-overhead-client-propagation-2
+spec:
+  resourceSelectors:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: management-overhead-client-2
+  placement:
+    clusterAffinity:
+      clusterNames:
+        - kubernetes-2
+       
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-server-2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: management-overhead-server-2
+  template:
+    metadata:
+      labels:
+        app: management-overhead-server-2
+        service: overhead
+    spec:
+      containers:
+      - name: management-overhead-server
+        image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
+        imagePullPolicy: Always 
+
+---
+
+apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+  name: management-overhead-server-propagation-2
+spec:
+  resourceSelectors:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: management-overhead-server-2
+  placement:
+    clusterAffinity:
+      clusterNames:
+        - kubernetes-2
+       
+
+
+--- 
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-client-3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: management-overhead-client-3
+  template:
+    metadata:
+      labels:
+        app: management-overhead-client-3
+    spec:
+      containers:
+      - name: management-overhead-client
+        image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
+        imagePullPolicy: Always 
+        env:  
+        - name: NUM_PROGRAMS
+          value: "10"  
+        - name: DURATION_IN_SECONDS
+          value: "300"  
+        - name: SERVICE_URL
+          value: "10.99.144.18" 
+
+---
+
+apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+  name: management-overhead-client-propagation-3
+spec:
+  resourceSelectors:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: management-overhead-client-3
+  placement:
+    clusterAffinity:
+      clusterNames:
+        - kubernetes-2
+       
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-server-3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: management-overhead-server-3
+  template:
+    metadata:
+      labels:
+        app: management-overhead-server-3
+        service: overhead
+    spec:
+      containers:
+      - name: management-overhead-server
+        image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
+        imagePullPolicy: Always 
+
+---
+
+apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+  name: management-overhead-server-propagation-3
+spec:
+  resourceSelectors:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: management-overhead-server-3
+  placement:
+    clusterAffinity:
+      clusterNames:
+        - kubernetes-2
+       
+
+
+--- 
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-client-4
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: management-overhead-client-4
+  template:
+    metadata:
+      labels:
+        app: management-overhead-client-4
+    spec:
+      containers:
+      - name: management-overhead-client
+        image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
+        imagePullPolicy: Always 
+        env:  
+        - name: NUM_PROGRAMS
+          value: "10"  
+        - name: DURATION_IN_SECONDS
+          value: "300"  
+        - name: SERVICE_URL
+          value: "10.99.144.18" 
+
+---
+
+apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+  name: management-overhead-client-propagation-4
+spec:
+  resourceSelectors:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: management-overhead-client-4
+  placement:
+    clusterAffinity:
+      clusterNames:
+        - kubernetes-2
+       
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-server-4
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: management-overhead-server-4
+  template:
+    metadata:
+      labels:
+        app: management-overhead-server-4
+        service: overhead
+    spec:
+      containers:
+      - name: management-overhead-server
+        image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
+        imagePullPolicy: Always 
+
+---
+
+apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+  name: management-overhead-server-propagation-4
+spec:
+  resourceSelectors:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: management-overhead-server-4
+  placement:
+    clusterAffinity:
+      clusterNames:
+        - kubernetes-2
+       
+
+
+--- 
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-client-5
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: management-overhead-client-5
+  template:
+    metadata:
+      labels:
+        app: management-overhead-client-5
+    spec:
+      containers:
+      - name: management-overhead-client
+        image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
+        imagePullPolicy: Always 
+        env:  
+        - name: NUM_PROGRAMS
+          value: "10"  
+        - name: DURATION_IN_SECONDS
+          value: "300"  
+        - name: SERVICE_URL
+          value: "10.99.144.18" 
+
+---
+
+apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+  name: management-overhead-client-propagation-5
+spec:
+  resourceSelectors:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: management-overhead-client-5
+  placement:
+    clusterAffinity:
+      clusterNames:
+        - kubernetes-2
+       
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-server-5
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: management-overhead-server-5
+  template:
+    metadata:
+      labels:
+        app: management-overhead-server-5
+        service: overhead
+    spec:
+      containers:
+      - name: management-overhead-server
+        image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
+        imagePullPolicy: Always 
+
+---
+
+apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+  name: management-overhead-server-propagation-5
+spec:
+  resourceSelectors:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: management-overhead-server-5
+  placement:
+    clusterAffinity:
+      clusterNames:
+        - kubernetes-2
+       
+
+
+--- 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-client-6
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: management-overhead-client-6
+  template:
+    metadata:
+      labels:
+        app: management-overhead-client-6
+    spec:
+      containers:
+      - name: management-overhead-client
+        image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
+        imagePullPolicy: Always 
+        env:  
+        - name: NUM_PROGRAMS
+          value: "10"  
+        - name: DURATION_IN_SECONDS
+          value: "300"  
+        - name: SERVICE_URL
+          value: "10.99.144.18" 
+
+---
+
+apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+  name: management-overhead-client-propagation-6
+spec:
+  resourceSelectors:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: management-overhead-client-6
+  placement:
+    clusterAffinity:
+      clusterNames:
+        - kubernetes-2
+       
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-server-6
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: management-overhead-server-6
+  template:
+    metadata:
+      labels:
+        app: management-overhead-server-6
+        service: overhead
+    spec:
+      containers:
+      - name: management-overhead-server
+        image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
+        imagePullPolicy: Always 
+
+---
+
+apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+  name: management-overhead-server-propagation-6
+spec:
+  resourceSelectors:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: management-overhead-server-6
+  placement:
+    clusterAffinity:
+      clusterNames:
+        - kubernetes-2
+       
+
+
+--- 
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-client-7
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: management-overhead-client-7
+  template:
+    metadata:
+      labels:
+        app: management-overhead-client-7
+    spec:
+      containers:
+      - name: management-overhead-client
+        image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
+        imagePullPolicy: Always 
+        env:  
+        - name: NUM_PROGRAMS
+          value: "10"  
+        - name: DURATION_IN_SECONDS
+          value: "300"  
+        - name: SERVICE_URL
+          value: "10.99.144.18" 
+
+---
+
+apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+  name: management-overhead-client-propagation-7
+spec:
+  resourceSelectors:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: management-overhead-client-7
+  placement:
+    clusterAffinity:
+      clusterNames:
+        - kubernetes-2
+       
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-server-7
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: management-overhead-server-7
+  template:
+    metadata:
+      labels:
+        app: management-overhead-server-7
+        service: overhead
+    spec:
+      containers:
+      - name: management-overhead-server
+        image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
+        imagePullPolicy: Always 
+
+---
+
+apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+  name: management-overhead-server-propagation-7
+spec:
+  resourceSelectors:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: management-overhead-server-7
+  placement:
+    clusterAffinity:
+      clusterNames:
+        - kubernetes-2
+       
+
+
+--- 
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-client-8
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: management-overhead-client-8
+  template:
+    metadata:
+      labels:
+        app: management-overhead-client-8
+    spec:
+      containers:
+      - name: management-overhead-client
+        image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
+        imagePullPolicy: Always 
+        env:  
+        - name: NUM_PROGRAMS
+          value: "10"  
+        - name: DURATION_IN_SECONDS
+          value: "300"  
+        - name: SERVICE_URL
+          value: "10.99.144.18" 
+
+---
+
+apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+  name: management-overhead-client-propagation-8
+spec:
+  resourceSelectors:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: management-overhead-client-8
+  placement:
+    clusterAffinity:
+      clusterNames:
+        - kubernetes-2
+       
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-server-8
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: management-overhead-server-8
+  template:
+    metadata:
+      labels:
+        app: management-overhead-server-8
+        service: overhead
+    spec:
+      containers:
+      - name: management-overhead-server
+        image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
+        imagePullPolicy: Always 
+
+---
+
+apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+  name: management-overhead-server-propagation-8
+spec:
+  resourceSelectors:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: management-overhead-server-8
+  placement:
+    clusterAffinity:
+      clusterNames:
+        - kubernetes-2
+       
+
+
+--- 
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-client-9
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: management-overhead-client-9
+  template:
+    metadata:
+      labels:
+        app: management-overhead-client-9
+    spec:
+      containers:
+      - name: management-overhead-client
+        image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
+        imagePullPolicy: Always 
+        env:  
+        - name: NUM_PROGRAMS
+          value: "10"  
+        - name: DURATION_IN_SECONDS
+          value: "300"  
+        - name: SERVICE_URL
+          value: "10.99.144.18" 
+
+---
+
+apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+  name: management-overhead-client-propagation-9
+spec:
+  resourceSelectors:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: management-overhead-client-9
+  placement:
+    clusterAffinity:
+      clusterNames:
+        - kubernetes-2
+       
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-server-9
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: management-overhead-server-9
+  template:
+    metadata:
+      labels:
+        app: management-overhead-server-9
+        service: overhead
+    spec:
+      containers:
+      - name: management-overhead-server
+        image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
+        imagePullPolicy: Always 
+
+---
+
+apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+  name: management-overhead-server-propagation-9
+spec:
+  resourceSelectors:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: management-overhead-server-9
+  placement:
+    clusterAffinity:
+      clusterNames:
+        - kubernetes-2
+       
+
+
+--- 
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-client-10
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: management-overhead-client-10
+  template:
+    metadata:
+      labels:
+        app: management-overhead-client-10
+    spec:
+      containers:
+      - name: management-overhead-client
+        image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
+        imagePullPolicy: Always 
+        env:  
+        - name: NUM_PROGRAMS
+          value: "10"  
+        - name: DURATION_IN_SECONDS
+          value: "300"  
+        - name: SERVICE_URL
+          value: "10.99.144.18" 
+
+---
+
+apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+  name: management-overhead-client-propagation-10
+spec:
+  resourceSelectors:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: management-overhead-client-10
+  placement:
+    clusterAffinity:
+      clusterNames:
+        - kubernetes-2
+       
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-overhead-server-10
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: management-overhead-server-10
+  template:
+    metadata:
+      labels:
+        app: management-overhead-server-10
+        service: overhead
+    spec:
+      containers:
+      - name: management-overhead-server
+        image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
+        imagePullPolicy: Always 
+
+---
+
+apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+  name: management-overhead-server-propagation-10
+spec:
+  resourceSelectors:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: management-overhead-server-10
+  placement:
+    clusterAffinity:
+      clusterNames:
+        - kubernetes-2
+       
+
+
+--- 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

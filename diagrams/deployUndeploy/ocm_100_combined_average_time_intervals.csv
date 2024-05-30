@@ -1,0 +1,8 @@
+Step,Average_Time
+Deployed_to_PodScheduled,7770.0
+PodScheduled_to_Init,6.666666666666667
+Init_to_ContainersReady,1746.6666666666667
+ContainersReady_to_Ready,0.0
+Delete_to_CleanUp,473.3333333333333
+Total_Time_Deployment,62666.666666666664
+Total_Time_Deletion,91000.0

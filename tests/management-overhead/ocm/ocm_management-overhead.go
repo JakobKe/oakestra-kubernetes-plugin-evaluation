@@ -59,10 +59,10 @@ func main() {
 	tempFilePath := "./management-overhead.ocm.template.yaml"
 	filePath := "./management-overhead.ocm.yaml"
 	config = Config{
-		Duration: 300,
+		Duration: 2700,
 		Replicas: 10,
 		VU:       10,
-		ServerIP: "10.105.86.183",
+		ServerIP: "10.99.144.18",
 	}
 
 	content, _ := generateYAML(config, tempFilePath)
@@ -80,7 +80,7 @@ func main() {
 	// Start Time for Test
 	fmt.Print("Start Timer for Measurement...")
 	START := time.Now()
-	time.Sleep(time.Duration(config.Duration+60) * time.Second)
+	time.Sleep(time.Duration(config.Duration) * time.Second)
 
 	// Undeploy Tests
 	undeployOCMLoadtest(filePath)

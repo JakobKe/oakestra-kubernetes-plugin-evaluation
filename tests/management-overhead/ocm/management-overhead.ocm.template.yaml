@@ -1,8 +1,8 @@
 apiVersion: work.open-cluster-management.io/v1
 kind: ManifestWork
 metadata:
-  namespace: kubernetes-eval
-  name:  management-overhead-client
+  namespace: kubernetes
+  name:  management-overhead-client-1
 spec:
   workload:
     manifests:
@@ -10,18 +10,18 @@ spec:
         kind: Deployment
         metadata:
           namespace: default
-          name: management-overhead-client
+          name: management-overhead-client-1
           labels:
-            app: management-overhead-client
+            app: management-overhead-client-1
         spec:
-          replicas: {{ .Replicas }}
+          replicas: 1
           selector:
             matchLabels:
-              app: management-overhead-client
+              app: management-overhead-client-1
           template:
             metadata:
               labels:
-                app: management-overhead-client
+                app: management-overhead-client-1
             spec:
               containers:
                 - name: management-overhead-client
@@ -42,8 +42,8 @@ spec:
 apiVersion: work.open-cluster-management.io/v1
 kind: ManifestWork
 metadata:
-  namespace: kubernetes-eval
-  name: management-overhead-server
+  namespace: kubernetes
+  name: management-overhead-server-1
 spec:
   workload:
     manifests:
@@ -51,23 +51,721 @@ spec:
         kind: Deployment
         metadata:
           namespace: default
-          name: management-overhead-server
+          name: management-overhead-server-1
           labels:
-            app: management-overhead-server
+            app: management-overhead-server-1
         spec:
-          replicas: {{ .Replicas }}
+          replicas: 1
           selector:
             matchLabels:
-              app: management-overhead-server
+              app: management-overhead-server-1
           template:
             metadata:
               labels:
-                app: management-overhead-server
+                app: management-overhead-server-1
+                service: overhead
             spec:
-              
               containers:
                 - name: management-overhead-server
                   image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
                   ports:
                     - containerPort: 7070
-                    
+
+
+---
+
+
+
+
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  namespace: kubernetes
+  name:  management-overhead-client-2
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          namespace: default
+          name: management-overhead-client-2
+          labels:
+            app: management-overhead-client-2
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: management-overhead-client-2
+          template:
+            metadata:
+              labels:
+                app: management-overhead-client-2
+            spec:
+              containers:
+                - name: management-overhead-client
+                  image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
+                  ports:
+                    - containerPort: 7070
+                  env:  
+                  - name: NUM_PROGRAMS
+                    value: "{{ .VU }}"
+                  - name: DURATION_IN_SECONDS
+                    value: "{{ .Duration }}"
+                  - name: SERVICE_URL
+                    value: "{{ .ServerIP }}"
+
+
+---
+
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  namespace: kubernetes
+  name: management-overhead-server-2
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          namespace: default
+          name: management-overhead-server-2
+          labels:
+            app: management-overhead-server-2
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: management-overhead-server-2
+          template:
+            metadata:
+              labels:
+                app: management-overhead-server-2
+                service: overhead
+            spec:
+              containers:
+                - name: management-overhead-server
+                  image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
+                  ports:
+                    - containerPort: 7070
+
+
+---
+
+
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  namespace: kubernetes
+  name:  management-overhead-client-3
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          namespace: default
+          name: management-overhead-client-3
+          labels:
+            app: management-overhead-client-3
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: management-overhead-client-3
+          template:
+            metadata:
+              labels:
+                app: management-overhead-client-3
+            spec:
+              containers:
+                - name: management-overhead-client
+                  image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
+                  ports:
+                    - containerPort: 7070
+                  env:  
+                  - name: NUM_PROGRAMS
+                    value: "{{ .VU }}"
+                  - name: DURATION_IN_SECONDS
+                    value: "{{ .Duration }}"
+                  - name: SERVICE_URL
+                    value: "{{ .ServerIP }}"
+
+
+---
+
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  namespace: kubernetes
+  name: management-overhead-server-3
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          namespace: default
+          name: management-overhead-server-3
+          labels:
+            app: management-overhead-server-3
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: management-overhead-server-3
+          template:
+            metadata:
+              labels:
+                app: management-overhead-server-3
+                service: overhead
+            spec:
+              containers:
+                - name: management-overhead-server
+                  image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
+                  ports:
+                    - containerPort: 7070
+
+
+---
+
+
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  namespace: kubernetes
+  name:  management-overhead-client-4
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          namespace: default
+          name: management-overhead-client-4
+          labels:
+            app: management-overhead-client-4
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: management-overhead-client-4
+          template:
+            metadata:
+              labels:
+                app: management-overhead-client-4
+            spec:
+              containers:
+                - name: management-overhead-client
+                  image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
+                  ports:
+                    - containerPort: 7070
+                  env:  
+                  - name: NUM_PROGRAMS
+                    value: "{{ .VU }}"
+                  - name: DURATION_IN_SECONDS
+                    value: "{{ .Duration }}"
+                  - name: SERVICE_URL
+                    value: "{{ .ServerIP }}"
+
+
+---
+
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  namespace: kubernetes
+  name: management-overhead-server-4
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          namespace: default
+          name: management-overhead-server-4
+          labels:
+            app: management-overhead-server-4
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: management-overhead-server-4
+          template:
+            metadata:
+              labels:
+                app: management-overhead-server-4
+                service: overhead
+            spec:
+              containers:
+                - name: management-overhead-server
+                  image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
+                  ports:
+                    - containerPort: 7070
+
+
+---
+
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  namespace: kubernetes
+  name:  management-overhead-client-5
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          namespace: default
+          name: management-overhead-client-5
+          labels:
+            app: management-overhead-client-5
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: management-overhead-client-5
+          template:
+            metadata:
+              labels:
+                app: management-overhead-client-5
+            spec:
+              containers:
+                - name: management-overhead-client
+                  image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
+                  ports:
+                    - containerPort: 7070
+                  env:  
+                  - name: NUM_PROGRAMS
+                    value: "{{ .VU }}"
+                  - name: DURATION_IN_SECONDS
+                    value: "{{ .Duration }}"
+                  - name: SERVICE_URL
+                    value: "{{ .ServerIP }}"
+
+
+---
+
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  namespace: kubernetes
+  name: management-overhead-server-5
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          namespace: default
+          name: management-overhead-server-5
+          labels:
+            app: management-overhead-server-5
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: management-overhead-server-5
+          template:
+            metadata:
+              labels:
+                app: management-overhead-server-5
+                service: overhead
+            spec:
+              containers:
+                - name: management-overhead-server
+                  image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
+                  ports:
+                    - containerPort: 7070
+
+
+---
+
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  namespace: kubernetes
+  name:  management-overhead-client-6
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          namespace: default
+          name: management-overhead-client-6
+          labels:
+            app: management-overhead-client-6
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: management-overhead-client-6
+          template:
+            metadata:
+              labels:
+                app: management-overhead-client-6
+            spec:
+              containers:
+                - name: management-overhead-client
+                  image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
+                  ports:
+                    - containerPort: 7070
+                  env:  
+                  - name: NUM_PROGRAMS
+                    value: "{{ .VU }}"
+                  - name: DURATION_IN_SECONDS
+                    value: "{{ .Duration }}"
+                  - name: SERVICE_URL
+                    value: "{{ .ServerIP }}"
+
+
+---
+
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  namespace: kubernetes
+  name: management-overhead-server-6
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          namespace: default
+          name: management-overhead-server-6
+          labels:
+            app: management-overhead-server-6
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: management-overhead-server-6
+          template:
+            metadata:
+              labels:
+                app: management-overhead-server-6
+                service: overhead
+            spec:
+              containers:
+                - name: management-overhead-server
+                  image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
+                  ports:
+                    - containerPort: 7070
+
+
+---
+
+
+
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  namespace: kubernetes
+  name:  management-overhead-client-7
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          namespace: default
+          name: management-overhead-client-7
+          labels:
+            app: management-overhead-client-7
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: management-overhead-client-7
+          template:
+            metadata:
+              labels:
+                app: management-overhead-client-7
+            spec:
+              containers:
+                - name: management-overhead-client
+                  image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
+                  ports:
+                    - containerPort: 7070
+                  env:  
+                  - name: NUM_PROGRAMS
+                    value: "{{ .VU }}"
+                  - name: DURATION_IN_SECONDS
+                    value: "{{ .Duration }}"
+                  - name: SERVICE_URL
+                    value: "{{ .ServerIP }}"
+
+
+---
+
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  namespace: kubernetes
+  name: management-overhead-server-7
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          namespace: default
+          name: management-overhead-server-7
+          labels:
+            app: management-overhead-server-7
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: management-overhead-server-7
+          template:
+            metadata:
+              labels:
+                app: management-overhead-server-7
+                service: overhead
+            spec:
+              containers:
+                - name: management-overhead-server
+                  image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
+                  ports:
+                    - containerPort: 7070
+
+
+---
+
+
+
+
+
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  namespace: kubernetes
+  name:  management-overhead-client-8
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          namespace: default
+          name: management-overhead-client-8
+          labels:
+            app: management-overhead-client-8
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: management-overhead-client-8
+          template:
+            metadata:
+              labels:
+                app: management-overhead-client-8
+            spec:
+              containers:
+                - name: management-overhead-client
+                  image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
+                  ports:
+                    - containerPort: 7070
+                  env:  
+                  - name: NUM_PROGRAMS
+                    value: "{{ .VU }}"
+                  - name: DURATION_IN_SECONDS
+                    value: "{{ .Duration }}"
+                  - name: SERVICE_URL
+                    value: "{{ .ServerIP }}"
+
+
+---
+
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  namespace: kubernetes
+  name: management-overhead-server-8
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          namespace: default
+          name: management-overhead-server-8
+          labels:
+            app: management-overhead-server-8
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: management-overhead-server-8
+          template:
+            metadata:
+              labels:
+                app: management-overhead-server-8
+                service: overhead
+            spec:
+              containers:
+                - name: management-overhead-server
+                  image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
+                  ports:
+                    - containerPort: 7070
+
+
+---
+
+
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  namespace: kubernetes
+  name:  management-overhead-client-9
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          namespace: default
+          name: management-overhead-client-9
+          labels:
+            app: management-overhead-client-9
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: management-overhead-client-9
+          template:
+            metadata:
+              labels:
+                app: management-overhead-client-9
+            spec:
+              containers:
+                - name: management-overhead-client
+                  image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
+                  ports:
+                    - containerPort: 7070
+                  env:  
+                  - name: NUM_PROGRAMS
+                    value: "{{ .VU }}"
+                  - name: DURATION_IN_SECONDS
+                    value: "{{ .Duration }}"
+                  - name: SERVICE_URL
+                    value: "{{ .ServerIP }}"
+
+
+---
+
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  namespace: kubernetes
+  name: management-overhead-server-9
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          namespace: default
+          name: management-overhead-server-9
+          labels:
+            app: management-overhead-server-9
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: management-overhead-server-9
+          template:
+            metadata:
+              labels:
+                app: management-overhead-server-9
+                service: overhead
+            spec:
+              containers:
+                - name: management-overhead-server
+                  image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
+                  ports:
+                    - containerPort: 7070
+
+
+---
+
+
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  namespace: kubernetes
+  name:  management-overhead-client-10
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          namespace: default
+          name: management-overhead-client-10
+          labels:
+            app: management-overhead-client-10
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: management-overhead-client-10
+          template:
+            metadata:
+              labels:
+                app: management-overhead-client-10
+            spec:
+              containers:
+                - name: management-overhead-client
+                  image: ghcr.io/jakobke/oakestra/overhead-management-client:latest
+                  ports:
+                    - containerPort: 7070
+                  env:  
+                  - name: NUM_PROGRAMS
+                    value: "{{ .VU }}"
+                  - name: DURATION_IN_SECONDS
+                    value: "{{ .Duration }}"
+                  - name: SERVICE_URL
+                    value: "{{ .ServerIP }}"
+
+
+---
+
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  namespace: kubernetes
+  name: management-overhead-server-10
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          namespace: default
+          name: management-overhead-server-10
+          labels:
+            app: management-overhead-server-10
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: management-overhead-server-10
+          template:
+            metadata:
+              labels:
+                app: management-overhead-server-10
+                service: overhead
+            spec:
+              containers:
+                - name: management-overhead-server
+                  image: ghcr.io/jakobke/oakestra/overhead-management-server:latest
+                  ports:
+                    - containerPort: 7070
+
+---

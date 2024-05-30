@@ -16,3 +16,13 @@ Ich gehe hier nichr über den kubeclient für golang, sondern eifnach über das 
 
 
 Die Service IP gebe ich immer an, da muss ich sicherstellen, dass ich die richtige verwende! 
+
+
+
+
+Es gibt jetzt noch einen zweiten Test, zwei Cluster!
+Mach ich den überhaupt?
+
+
+
+Bei Karmada muss das Cluster kubernetes und kubernetes-2 heißen. 

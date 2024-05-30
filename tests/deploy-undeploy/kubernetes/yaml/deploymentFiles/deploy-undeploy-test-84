@@ -1,0 +1,29 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy-undeploy-test-84
+  labels:
+    evaluation: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deploy-undeploy-test-84
+      evaluation: test
+  template:
+    metadata:
+      labels:
+        app: deploy-undeploy-test-84
+        evaluation: test
+    spec:
+      containers:
+      - name: gosigterm
+        image: ghcr.io/jakobke/oakestra/go-sigterm:latest
+        readinessProbe:
+          httpGet:
+            path: "/ready"
+            port: 7070
+          initialDelaySeconds: 0
+          periodSeconds: 1
+          successThreshold: 1

@@ -139,8 +139,12 @@ func main() {
 		log.Fatalf("Error: %v", err)
 	}
 
+	fmt.Println(cleanedPods)
+
 	fmt.Println("Write to CSV")
 	writeInfoToCSV("oakestra.deploy.undeploy.csv", deploymentInfos, deletedDeployments, cleanedPods)
+
+	deleteAllApps()
 }
 
 func createK8SClient() {
@@ -165,13 +169,16 @@ func getFinalizedDeployments(deletedDeployments map[string]int) (map[string]time
 		pods, err := clientset.CoreV1().Pods("oakestra").List(context.TODO(), metav1.ListOptions{
 			LabelSelector: fmt.Sprintf("applicationName=%s", APP_NAME),
 		})
+
+		// fmt.Println(len(pods.Items))
+		// fmt.Println(time.Now())
 		if err != nil {
 			log.Printf("Error getting pods for finalized Information: %v\n", err)
 			return nil, err
 		}
 		stillActiveDeployments := make(map[string]int, len(pods.Items))
 		for _, pod := range pods.Items {
-			if deploymentName, ok := pod.Labels["app"]; ok {
+			if deploymentName, ok := pod.Annotations["deploymentName"]; ok {
 				stillActiveDeployments[deploymentName] = 0
 			}
 		}
@@ -204,13 +211,11 @@ func writeInfoToCSV(csvName string, deploymentInfos map[string]DeploymentInfo, d
 	defer writer.Flush()
 
 	writer.Write([]string{"DeploymentName", "PodName", "DeploymentTime", "PodScheduled", "Initialized", "PodReadyToStartContainers", "ContainersReady", "Ready", "DeleteTime", "CleanUpTime"})
-
 	var cleanUpTime time.Time
 
 	for key, deploymentInfo := range deploymentInfos {
 		if deletedTime, exists := deletedDeployments[key]; exists {
 
-			// If some values did not get saved.
 			if cleanUpTime, exists = cleanedPods[key]; !exists {
 				cleanUpTime = deletedTime
 			}
@@ -414,8 +419,6 @@ func registerApp(deployment_descriptor map[string]interface{}) (string, []string
 	if err := json.Unmarshal(body, &s); err != nil {
 		panic(err)
 	}
-
-	print(s)
 
 	var applications []Application
 	err = json.Unmarshal([]byte(s), &applications)

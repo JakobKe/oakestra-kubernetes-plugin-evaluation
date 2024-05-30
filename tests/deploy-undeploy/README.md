@@ -19,3 +19,35 @@ Image wird nicht gelöscht, das darf im cache liegen bleiben.
 karmadactl muss installiert sein!
 Es muss auch die Karmada Config sichtbar sein. 
 
+
+
+
+
+Das mit dem Controller hinzugefügt werden: 
+// Delpoyment Test
+
+				ReadinessProbe: &corev1.Probe{
+					ProbeHandler: corev1.ProbeHandler{
+						HTTPGet: &corev1.HTTPGetAction{
+							Path: "/ready",
+							Port: intstr.FromInt(7070),
+						},
+					},
+					InitialDelaySeconds: 0,
+					PeriodSeconds:       1,
+					SuccessThreshold:    1,
+				},
+				//Delpoyment Test
+                
+
+
+und das hier für den Oakestra Test: 
+
+
+deployment.Spec.Template.Annotations = map[string]string{
+			"k8s.v1.cni.cncf.io/networks": "oakestra-cni",
+			"oakestra.io/port":            oakestraJob.Spec.Port,
+			// Delpoyment Test
+			"deploymentName": deployment.Name,
+			// Delpoyment Test
+		}
