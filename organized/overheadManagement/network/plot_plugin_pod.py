@@ -14,7 +14,7 @@ def clean_pod_name(pod_name):
 data = pd.read_csv('average_values_per_pod.csv')
 
 # Regex-Filter für Namespaces angeben
-namespace_pattern = r'karmada-system|oakestra-system|open.*'  # Füge hier die gewünschten Regex-Muster hinzu
+namespace_pattern = r'karmada-system|oakestra-system|open.*'
 
 # Daten nach den erlaubten Namespaces filtern
 filtered_data = data[data['namespace'].str.contains(namespace_pattern, regex=True)]
@@ -47,29 +47,15 @@ def create_and_save_plot(data, title, ylabel, filename):
     plt.xlabel('Pod')
     plt.ylabel(ylabel)
     plt.legend(title='Type')
-    plt.xticks(rotation=90)  # Drehe die x-Achsen-Beschriftungen für bessere Lesbarkeit
-    plt.tight_layout()  # Layout anpassen
-    plt.savefig(filename)  # Plot speichern
+    plt.xticks(rotation=90)
+    plt.tight_layout()
+    plt.savefig(filename)
     plt.show()
 
-# Plot für Bytes erstellen und speichern
-create_and_save_plot(sorted_sum_bytes_data, 'Total Bytes by Pod and Type for Each Framework', 'Total Bytes', 'plugin_pod_total_bytes_all_frameworks.png')
+# Zusätzlichen Plot erstellen für die spezifizierten Kategorien
+categories = ['kubernetes', 'karmada', 'ocm', 'oakestra-oakestra', 'oakestra-kubernetes']
+category_data = sum_bytes_data[sum_bytes_data['network_type'].isin(categories)]
+category_data['category'] = category_data['network_type']
+create_and_save_plot(category_data, 'Comparison Across Specified Categories', 'Total Bytes', 'comparison_across_categories.png')
 
-# Plot für Packete erstellen und speichern
-create_and_save_plot(sorted_sum_packets_data, 'Total Packets by Pod and Type for Each Framework', 'Total Packets', 'plugin_pod_total_packets_all_frameworks.png')
-
-# Separate Plots für die Frameworks und Network Types erstellen und speichern
-frameworks = ['oakestra', 'karmada', 'ocm']
-network_types = ['kubernetes', 'oakestra']
-
-for framework in frameworks:
-    for network_type in network_types:
-        framework_network_bytes_data = sorted_sum_bytes_data[(sorted_sum_bytes_data['framework'].str.lower() == framework.lower()) & (sorted_sum_bytes_data['network_type'] == network_type)]
-        framework_network_packets_data = sorted_sum_packets_data[(sorted_sum_packets_data['framework'].str.lower() == framework.lower()) & (sorted_sum_packets_data['network_type'] == network_type)]
-        
-        if not framework_network_bytes_data.empty:
-            create_and_save_plot(framework_network_bytes_data, f'Total Bytes by Pod and Type for {framework.capitalize()} Framework ({network_type})', 'Total Bytes', f'plugin_pod_total_bytes_{framework.lower()}_{network_type}.png')
-        if not framework_network_packets_data.empty:
-            create_and_save_plot(framework_network_packets_data, f'Total Packets by Pod and Type for {framework.capitalize()} Framework ({network_type})', 'Total Packets', f'plugin_pod_total_packets_{framework.lower()}_{network_type}.png')
-
-print("Plots gespeichert.")
+print("Alle Plots gespeichert.")
