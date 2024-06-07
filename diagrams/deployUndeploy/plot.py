@@ -45,39 +45,61 @@ cleanup_pivot = cleanup_df.pivot_table(index='Orchestration Framework', columns=
 
 # DataFrame for Total Times
 total_times_df = pd.concat(total_times_frames)
+
+# Ändere die Reihenfolge der Schritte für den letzten Plot
 total_times_pivot = total_times_df.pivot_table(index='Orchestration Framework', columns='Step', values='Average_Time', aggfunc='sum')
+total_times_pivot = total_times_pivot[['Total_Time_Deployment', 'Total_Time_Deletion']]
+
+framework_colors = {
+    'oakestra': '#666f21',  # Grün
+    'ocm': '#ffc000',       # Orange
+    'karmada': '#bf4129'    # Blau
+}
+
+# Farbpaletten als Hex-Codes definieren
+palette_deployment = ['#666f21', '#ffc000', '#bf4129', '#6F2166']
+palette_cleanup = ['#21666F']
+palette_total_times = ['#666f21', '#21666F']
+
+# Funktion zum Erstellen und Speichern von Plots mit benutzerdefinierter Farbpalette
+def create_and_save_plot(pivot_df, ylabel, filename, palette):
+    pivot_df.columns = pivot_df.columns.str.replace('_', ' ')
+    print(pivot_df)
+    plt.rcParams.update({'font.size': 14})
+    fig, ax = plt.subplots(figsize=(10, 6))
+    pivot_df.plot(kind='bar', stacked=True, ax=ax, color=palette)
+    plt.ylabel(ylabel, fontsize=16)
+    plt.xlabel('Framework', fontsize=16)
+    plt.xticks(rotation=45)
+    plt.legend(title='Step')
+    plt.tight_layout()
+    plt.savefig(filename)  # Save as PNG
+    plt.show()
+    plt.close()
+
+# Funktion zum Erstellen und Speichern des Total Time Plots
+def create_and_save_total_times_plot(pivot_df, ylabel, filename, palette):
+    pivot_df.columns = pivot_df.columns.str.replace('_', ' ')
+    print(pivot_df)
+    plt.rcParams.update({'font.size': 14})
+    fig, ax = plt.subplots(figsize=(10, 6))
+    pivot_df.plot(kind='bar', stacked=True, ax=ax, color=palette)
+    plt.ylabel(ylabel, fontsize=16)
+    plt.xlabel('Framework', fontsize=16)
+    plt.xticks(rotation=45)
+    plt.legend(title='Step')
+    plt.tight_layout()
+    plt.savefig(filename)  # Save as PNG
+    plt.show()
+    plt.close()
 
 # First Diagram: Total time per Orchestration Framework divided by steps
-fig, ax = plt.subplots(figsize=(10, 6))
-pivot_df.plot(kind='bar', stacked=True, ax=ax)
-plt.title('Total Time per Orchestration Framework Divided by Steps')
-plt.ylabel('Time in Milliseconds')
-plt.xlabel('Orchestration Framework')
-plt.xticks(rotation=45)
-plt.legend(title='Step')
-plt.tight_layout()
-plt.savefig('deployment_time_per_orchestration_framework.png')  # Save as PNG
+create_and_save_plot(pivot_df, 'Time in Milliseconds', 'deployment_time_per_orchestration_framework.png', palette_deployment)
 
 # Second Diagram: Specialized on "Delete to CleanUp"
-fig, ax = plt.subplots(figsize=(10, 6))
-cleanup_pivot.plot(kind='bar', ax=ax)
-plt.title('Time for "Delete to CleanUp" per Orchestration Framework')
-plt.ylabel('Time in Milliseconds')
-plt.xlabel('Orchestration Framework')
-plt.xticks(rotation=45)
-plt.legend(title='Step')
-plt.tight_layout()
-plt.savefig('delete_to_cleanup_time_per_orchestration_framework.png')  # Save as PNG
+create_and_save_plot(cleanup_pivot, 'Time in Milliseconds', 'delete_to_cleanup_time_per_orchestration_framework.png', palette_cleanup)
 
 # Third Diagram: Total Deployment and Deletion Time
-fig, ax = plt.subplots(figsize=(10, 6))
-total_times_pivot.plot(kind='bar', ax=ax)
-plt.title('Total Deployment and Deletion Times per Orchestration Framework')
-plt.ylabel('Time in Milliseconds')
-plt.xlabel('Orchestration Framework')
-plt.xticks(rotation=45)
-plt.legend(title='Time Type')
-plt.tight_layout()
-plt.savefig('total_deployment_and_deletion_time_per_orchestration_framework.png')  # Save as PNG
+create_and_save_total_times_plot(total_times_pivot, 'Time in Milliseconds', 'total_deployment_and_deletion_time_per_orchestration_framework.png', palette_total_times)
 
-plt.show()
+print("Die Plots wurden gespeichert.")

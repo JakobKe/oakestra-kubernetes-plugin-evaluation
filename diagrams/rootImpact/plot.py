@@ -17,27 +17,31 @@ df = pd.DataFrame(data)
 df_cpu = df[df['Type'] == 'CPU']
 df_mem = df[df['Type'] == 'MEM']
 
-# Diagramm erstellen
-plt.figure(figsize=(12, 6))
-plt.subplot(1, 2, 1)  # 1 Zeile, 2 Spalten, 1. Subplot
-sns.barplot(x='Szenario', y='Wert', data=df_cpu, color='blue')
-plt.title('Percentage CPU Usage')
-plt.ylabel('Percentage')
+# Farbpalette definieren
+cpu_color = '#666f21'  # Beispiel-Hex-Code für Blau
+mem_color = '#21666F'  # Beispiel-Hex-Code für Grün
+
+print(df_cpu)
+print(df_mem)
+
+# Plot für CPU Usage
+plt.figure(figsize=(8, 6))
+sns.barplot(x='Szenario', y='Wert', data=df_cpu, color=cpu_color)
+plt.ylabel('Percentage', fontsize=16)
 plt.ylim(1.4, 1.9)
 plt.yticks(np.arange(1.4, 1.9, 0.05))
+plt.xlabel('Szenario', fontsize=16)
+plt.tight_layout()
+plt.savefig('cpu_usage_plot.png')
+plt.show()
 
-plt.subplot(1, 2, 2)  # 1 Zeile, 2 Spalten, 2. Subplot
-sns.barplot(x='Szenario', y='Wert', data=df_mem, color='green')
-plt.title('Memory Usage in GiB')
-plt.ylabel('GiB')
+# Plot für Memory Usage
+plt.figure(figsize=(8, 6))
+sns.barplot(x='Szenario', y='Wert', data=df_mem, color=mem_color)
+plt.ylabel('GiB', fontsize=16)
 plt.ylim(1.4, 1.6)
 plt.yticks(np.arange(1.4, 1.6, 0.02))
-
-# Anpassungen für das Layout
+plt.xlabel('Szenario', fontsize=16)
 plt.tight_layout()
-
-# Diagramme als PNG-Datei speichern
-plt.savefig('cpu_mem_usage_plot.png')
-
-# Diagramme anzeigen
+plt.savefig('mem_usage_plot.png')
 plt.show()

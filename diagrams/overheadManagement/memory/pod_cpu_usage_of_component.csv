@@ -1,0 +1,16 @@
+framework,Pod,CPU_Usage_Average,CPU_Usage_Variance
+karmada,karmada-agent-684568b767-nrdqv,64712704.0,85794.71138401778
+oakestra,cluster-netmanager-79477d7674-r8cmd,86360064.0,14688.670248489238
+oakestra,mongo-5759468d74-94zfl,372744192.0,1698692.9841249452
+oakestra,mosquitto-559ccc5d46-plm7g,3571712.0,12117.639671060098
+oakestra,node-netmanager-6thck,59891712.0,852947.5492772397
+oakestra,node-netmanager-c8x7r,29851648.0,67233.35327531242
+oakestra,node-netmanager-g4r46,110657536.0,1495958.0550969138
+oakestra,node-netmanager-jw5bq,99995648.0,4890617.162592566
+oakestra,node-netmanager-svw6g,39014400.0,10852684.809012331
+oakestra,node-netmanager-xf6mq,51449856.0,2418313.2395269647
+oakestra,oakestra-agent,18563072.0,327359.15381775144
+oakestra,oakestra-controller-manager-d74f6ddf5-2s675,48918528.0,280702.16946946766
+ocm,klusterlet-84c5d6fd77-69w75,52023296.0,2330933.1592788068
+ocm,klusterlet-registration-agent-d4cdf65cc-646fn,44568576.0,219517.00323709782
+ocm,klusterlet-work-agent-658d45bf67-5ftw9,57438208.0,2195495.5923667415

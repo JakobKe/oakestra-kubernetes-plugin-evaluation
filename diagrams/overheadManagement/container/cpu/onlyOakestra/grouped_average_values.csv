@@ -1,0 +1,5 @@
+directoryname,pod-type,value,std_dev
+oakestra,Framework Pods,0.0319356978280928,0.0038957928998419717
+oakestra,Other Pods,31.533590184660998,1.699936333359971
+oakestra-kubernetes,Framework Pods,0.013861799344259448,0.002328844381359541
+oakestra-kubernetes,Other Pods,29.94171762364687,1.4492196980335683

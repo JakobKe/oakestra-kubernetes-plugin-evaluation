@@ -10,7 +10,7 @@ def convert_to_milliseconds(time_str):
 
 # Verzeichnis mit CSV-Dateien
 directory_base_path = './../../results/deploymentTime/'
-csv_dir = 'kubernetes/client/100'
+csv_dir = 'kubernetes/yaml/100'
 directory_path = directory_base_path + csv_dir
 
 # Liste zur Speicherung der DataFrames
@@ -23,6 +23,7 @@ for file_name in os.listdir(directory_path):
     if file_name.endswith('.csv'):
         file_path = os.path.join(directory_path, file_name)
         df = pd.read_csv(file_path)
+        print(file_path)
         
         # Konvertieren der Zeitstempel in Millisekunden
         for col in ['DeploymentTime', 'PodScheduled', 'Initialized', 'ContainersReady', 'Ready', 'DeleteTime', 'CleanUpTime']:
@@ -36,8 +37,10 @@ for file_name in os.listdir(directory_path):
         df['Delete_to_CleanUp'] = df['CleanUpTime'] - df['DeleteTime']
 
         # Berechnung der Gesamtzeiten für den gesamten Testlauf
+        print(df['Ready'].max())
         total_deployment_time = df['Ready'].max() - df['DeploymentTime'].min()
         total_deletion_time = df['CleanUpTime'].max() - df['DeleteTime'].min()
+        print(total_deletion_time)
         total_deployment_times.append(total_deployment_time)
         total_deletion_times.append(total_deletion_time)
 
