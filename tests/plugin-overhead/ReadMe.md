@@ -1,7 +1,5 @@
-metrics Directory ausführen, um zu prüfen, welchen Impact die jeweiligen Plugins auf Plain Kubernetes haben.
+Run the metrics directory to check the impact of the respective plugins on Plain Kubernetes.
 
+Plain vs. oakestra vs. karmada vs. ocm.
 
-Plain vs. oakestra vs. karmada vs. ocm. 
-
-
-Dafür gibt es keine Skripts - vielleicht nur eine Beschreibung, wie es aufgebaut ist. 
+There are no scripts for the set up. Follow the instructions online

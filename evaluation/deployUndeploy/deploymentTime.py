@@ -10,6 +10,7 @@ def convert_to_milliseconds(time_str):
 
 # Verzeichnis mit CSV-Dateien
 directory_base_path = './../../results/deploymentTime/'
+# Needs to be done for each framework
 csv_dir = 'kubernetes/yaml/100'
 directory_path = directory_base_path + csv_dir
 
