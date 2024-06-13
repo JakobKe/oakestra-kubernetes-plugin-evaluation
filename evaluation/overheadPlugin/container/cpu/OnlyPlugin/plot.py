@@ -4,7 +4,6 @@ import seaborn as sns
 
 # Daten aus der CSV-Datei einlesen
 data = pd.read_csv('pod_cpu_usage_of_component.csv')
-print(data)
 
 # Bereinige die Pod-Namen mit einer Ausnahme für "node-netmanager"
 def clean_pod_name(pod_name):
@@ -19,12 +18,10 @@ def clean_pod_name(pod_name):
 
 data['Pod'] = data['Pod'].apply(clean_pod_name)
 
-print(data[data['Pod'] == 'node-netmanager'])
 # Aggregiere die Daten für node-netmanager Pods
 node_netmanager_avg = data[data['Pod'] == 'node-netmanager'][['CPU_Usage_Average', 'CPU_Usage_Variance']].mean()
-print(node_netmanager_avg)
 node_netmanager_row = pd.DataFrame({
-    'framework': ['oakestra'],
+    'framework': ['K-oakestra'],
     'Pod': ['node-netmanager'],
     'CPU_Usage_Average': [node_netmanager_avg['CPU_Usage_Average']],
     'CPU_Usage_Variance': [node_netmanager_avg['CPU_Usage_Variance']]
@@ -34,34 +31,38 @@ node_netmanager_row = pd.DataFrame({
 data = data[data['Pod'] != 'node-netmanager']  # Entferne ursprüngliche node-netmanager Einträge
 data = pd.concat([data, node_netmanager_row], ignore_index=True)
 
+# Framework-Namen ändern
+data['framework'] = data['framework'].replace({'oakestra': 'K-oakestra'})
+
 # Sortiere die Daten nach CPU-Verbrauch für eine ansprechendere Darstellung
 data.sort_values('CPU_Usage_Average', ascending=False, inplace=True)
 
 # Farbeinstellungen für spezifische Frameworks mit Hex-Codes
 framework_colors = {
-    'oakestra': '#666f21',  # Grün
-    'ocm': '#ffc000',       # Orange
-    'karmada': '#bf4129'    # Blau
+    'K-oakestra': '#666f21',  # Grün
+    'ocm': '#ffc000',         # Orange
+    'karmada': '#bf4129'      # Blau
 }
-#
 
-print(data)
+# Variablen für die Anpassung der Schrift- und Legenden-Größe
+label_font_size = 22
+legend_font_size = 'x-large'
+title_font_size = 'x-large'
 
-plt.rcParams.update({'font.size': 14})
+plt.rcParams.update({'font.size': label_font_size})
 
 # Balkendiagramm erstellen für den CPU-Verbrauch jedes Pods
-plt.figure(figsize=(18, 8))  # Größe des Diagramms anpassen
-print(data)
+plt.figure(figsize=(18, 8))
 bar_plot = sns.barplot(x='Pod', y='CPU_Usage_Average', hue='framework', data=data, palette=framework_colors)
 
 # Titel und Labels hinzufügen
-plt.xlabel('Pod', fontsize=16)
-plt.ylabel('CPU Usage Rate [1m]', fontsize=16)
+plt.xlabel('Pod', fontsize=label_font_size)
+plt.ylabel('CPU Usage Rate [1m]', fontsize=label_font_size)
 plt.ylim(0, 0.012)
-plt.xticks(rotation=45, ha='right')  # Dreht die X-Achsen-Beschriftungen für bessere Lesbarkeit
+plt.xticks(rotation=45, ha='right')
 
 # Legende anpassen und in die Grafik integrieren
-plt.legend(title='Framework', loc='upper right', fontsize='x-large', title_fontsize='x-large')
+plt.legend(title='Framework', loc='upper right', fontsize=legend_font_size, title_fontsize=title_font_size)
 
 # Varianz als Fehlerbalken hinzufügen
 for i in range(len(data)):
@@ -81,13 +82,12 @@ plt.show()
 # Zweites Diagramm: Gesamtnutzung pro Framework
 plt.figure(figsize=(10, 6))
 total_usage = data.groupby('framework')['CPU_Usage_Average'].sum().reset_index()
-print(total_usage)
 
 total_usage_plot = sns.barplot(x='framework', y='CPU_Usage_Average', data=total_usage, palette=framework_colors)
 
 # Titel und Labels hinzufügen
-plt.xlabel('Framework', fontsize=16)
-plt.ylabel('CPU Usage Rate [1m]', fontsize=16)
+plt.xlabel('Framework', fontsize=label_font_size)
+plt.ylabel('CPU Usage Rate [1m]', fontsize=label_font_size)
 plt.ylim(0, 0.02)
 
 # Diagramm speichern und anzeigen

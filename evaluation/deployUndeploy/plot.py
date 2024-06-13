@@ -6,7 +6,7 @@ files = {
     'karmada_100_combined_average_time_intervals.csv': 'Karmada',
     'ocm_100_combined_average_time_intervals.csv': 'OCM',
     'kubernetes_yaml_100_combined_average_time_intervals.csv': 'Kubernetes',
-    'oakestra_100_combined_average_time_intervals.csv': 'Oakestra',
+    'oakestra_100_combined_average_time_intervals.csv': 'K-oakestra',
 }
 
 # Prepare DataFrames
@@ -50,12 +50,6 @@ total_times_df = pd.concat(total_times_frames)
 total_times_pivot = total_times_df.pivot_table(index='Orchestration Framework', columns='Step', values='Average_Time', aggfunc='sum')
 total_times_pivot = total_times_pivot[['Total_Time_Deployment', 'Total_Time_Deletion']]
 
-framework_colors = {
-    'oakestra': '#666f21',  # Grün
-    'ocm': '#ffc000',       # Orange
-    'karmada': '#bf4129'    # Blau
-}
-
 # Farbpaletten als Hex-Codes definieren
 palette_deployment = ['#666f21', '#ffc000', '#bf4129', '#6F2166']
 palette_cleanup = ['#21666F']
@@ -64,8 +58,7 @@ palette_total_times = ['#666f21', '#21666F']
 # Funktion zum Erstellen und Speichern von Plots mit benutzerdefinierter Farbpalette
 def create_and_save_plot(pivot_df, ylabel, filename, palette):
     pivot_df.columns = pivot_df.columns.str.replace('_', ' ')
-    print(pivot_df)
-    plt.rcParams.update({'font.size': 14})
+    plt.rcParams.update({'font.size': 16})
     fig, ax = plt.subplots(figsize=(10, 6))
     pivot_df.plot(kind='bar', stacked=True, ax=ax, color=palette)
     plt.ylabel(ylabel, fontsize=16)
@@ -80,8 +73,7 @@ def create_and_save_plot(pivot_df, ylabel, filename, palette):
 # Funktion zum Erstellen und Speichern des Total Time Plots
 def create_and_save_total_times_plot(pivot_df, ylabel, filename, palette):
     pivot_df.columns = pivot_df.columns.str.replace('_', ' ')
-    print(pivot_df)
-    plt.rcParams.update({'font.size': 14})
+    plt.rcParams.update({'font.size': 16})
     fig, ax = plt.subplots(figsize=(10, 6))
     pivot_df.plot(kind='bar', stacked=True, ax=ax, color=palette)
     plt.ylabel(ylabel, fontsize=16)

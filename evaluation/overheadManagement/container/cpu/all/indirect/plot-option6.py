@@ -37,6 +37,9 @@ filtered_pods = kube_system_data[
 # "-kubernetes-1" von den Podnamen entfernen
 filtered_pods['pod'] = filtered_pods['pod'].str.replace('-kubernetes-1', '')
 
+# Framework-Namen ändern
+filtered_pods['framework'] = filtered_pods['framework'].replace({'oakestra': 'K-oakestra'})
+
 # Plot erstellen
 plt.figure(figsize=(14, 8))
 barplot = sns.barplot(x='framework', y='median', hue='pod', data=filtered_pods, palette='viridis', ci=None)
@@ -47,15 +50,21 @@ for index, row in filtered_pods.iterrows():
     pod_position = list(filtered_pods['pod'].unique()).index(row['pod'])
     barplot.errorbar(x=framework_index + pod_position * 0.25 - 0.25, y=row['median'], yerr=row['std'], fmt='none', c='black', capsize=5)
 
+# Variablen für die Anpassung der Schrift- und Legenden-Größe
+label_font_size = 20
+legend_font_size = 'large'
+title_font_size = 'large'
 
-plt.rcParams.update({'font.size': 16})
+plt.rcParams.update({'font.size': label_font_size})
 
 # Titel und Labels hinzufügen
-plt.xlabel('Framework', fontsize=16)
-plt.ylabel('CPU Usage', fontsize=16)
-plt.legend(title='Pod', loc='upper right', fontsize='large', title_fontsize='large')
+plt.xlabel('Framework', fontsize=label_font_size)
+plt.ylabel('CPU Usage', fontsize=label_font_size)
+plt.legend(title='Pod', loc='upper right', fontsize=legend_font_size, title_fontsize=title_font_size)
 plt.ylim(0, filtered_pods['median'].max() + 0.05)
-plt.xticks(rotation=0, ha='center', fontsize=12)
+plt.xticks(rotation=0, ha='center', fontsize=20)
+plt.yticks(rotation=0, fontsize=20)
+
 
 # Diagramm speichern und anzeigen
 plt.tight_layout()

@@ -13,6 +13,9 @@ def clean_pod_name(pod_name):
 # Daten aus einer CSV-Datei einlesen
 data = pd.read_csv('average_values_per_pod.csv')
 
+# Framework-Namen ändern
+data['framework'] = data['framework'].replace({'oakestra': 'K-oakestra'})
+
 # Regex-Filter für Namespaces angeben
 namespace_pattern = r'karmada-system|oakestra-system|open.*'  # Füge hier die gewünschten Regex-Muster hinzu
 
@@ -40,6 +43,9 @@ packets_data = filtered_data[filtered_data['type'].isin(['received_packets', 'tr
 sum_bytes_data = bytes_data.groupby(['framework', 'framework_pod', 'type'])['value'].sum().reset_index()
 sum_packets_data = packets_data.groupby(['framework', 'framework_pod', 'type'])['value'].sum().reset_index()
 
+# Bytes in Megabytes umrechnen
+sum_bytes_data['value'] = sum_bytes_data['value'] / (1024 * 1024)
+
 # Daten nach der Summe der Werte sortieren
 sum_bytes_data['total_value'] = sum_bytes_data.groupby('framework_pod')['value'].transform('sum')
 sum_packets_data['total_value'] = sum_packets_data.groupby('framework_pod')['value'].transform('sum')
@@ -49,17 +55,22 @@ sorted_sum_packets_data = sum_packets_data.sort_values('total_value', ascending=
 sorted_sum_bytes_data['type'] = sorted_sum_bytes_data['type'].str.replace('_', ' ')
 sorted_sum_packets_data['type'] = sorted_sum_packets_data['type'].str.replace('_', ' ')
 
+# Variablen für die Anpassung der Schrift- und Legenden-Größe
+label_font_size = 20
+legend_font_size = 'x-large'
+title_font_size = 'x-large'
+
 # Funktion zum Erstellen und Speichern von Plots
 def create_and_save_plot(data, ylabel, filename, palette, hue_order):
-    plt.rcParams.update({'font.size': 16})
+    plt.rcParams.update({'font.size': label_font_size})
     plt.figure(figsize=(16, 10))
     sns.barplot(x='framework_pod', y='value', hue='type', data=data, ci=None, palette=palette, hue_order=hue_order)
-    plt.xlabel('Pod', fontsize=16)
-    plt.ylabel(ylabel, fontsize=16)
-    plt.legend(title='Type', loc='upper right', fontsize='x-large', title_fontsize='x-large')
+    plt.xlabel('Pod', fontsize=label_font_size)
+    plt.ylabel(ylabel, fontsize=label_font_size)
+    plt.legend(title='Type', loc='upper right', fontsize=legend_font_size, title_fontsize=title_font_size)
     plt.xticks(rotation=45)  # Drehe die x-Achsen-Beschriftungen für bessere Lesbarkeit
     plt.tight_layout()  # Layout anpassen
-    plt.savefig(filename)  # Plot speichern
+    plt.savefig(filename)
     plt.show()
 
 # Reihenfolge der Hue-Elemente festlegen
@@ -67,14 +78,14 @@ hue_order_bytes = ['received bytes', 'transmit bytes']
 hue_order_packets = ['received packets', 'transmit packets']
 
 # Plot für Bytes (in MB) erstellen und speichern
-create_and_save_plot(sorted_sum_bytes_data, 'Total Bytes', 'plugin_pod_total_bytes_all_frameworks.png', palette_bytes, hue_order_bytes)
+create_and_save_plot(sorted_sum_bytes_data, 'Total Bytes (MB)', 'plugin_pod_total_bytes_all_frameworks.png', palette_bytes, hue_order_bytes)
 
 # Plot für Packete erstellen und speichern
 create_and_save_plot(sorted_sum_packets_data, 'Total Packets', 'plugin_pod_total_packets_all_frameworks.png', palette_packets, hue_order_packets)
 
-# Pods für das Framework "oakestra" extrahieren und ausgeben
-oakestra_pods = filtered_data[filtered_data['framework'] == 'oakestra']['pod'].unique()
-print(f'Pods, die für das Framework "oakestra" zusammengerechnet wurden: {oakestra_pods}')
+# Pods für das Framework "K-oakestra" extrahieren und ausgeben
+k_oakestra_pods = filtered_data[filtered_data['framework'] == 'K-oakestra']['pod'].unique()
+print(f'Pods, die für das Framework "K-oakestra" zusammengerechnet wurden: {k_oakestra_pods}')
 
 # Werte für jeden Pod ausgeben
 print("\nWerte für jeden Pod:")

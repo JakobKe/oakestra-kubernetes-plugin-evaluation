@@ -13,6 +13,9 @@ def clean_pod_name(pod_name):
 # Daten aus einer CSV-Datei einlesen
 data = pd.read_csv('average_values_per_pod.csv')
 
+# Framework-Namen ändern
+data['framework'] = data['framework'].replace({'oakestra': 'K-oakestra'})
+
 # Regex-Filter für Namespaces angeben
 namespace_pattern = r'.*'  # Füge hier die gewünschten Regex-Muster hinzu
 
@@ -51,14 +54,19 @@ sum_packets_data.sort_values(['framework', 'value'], ascending=[True, False], in
 sum_bytes_data['type'] = sum_bytes_data['type'].str.replace('_', ' ')
 sum_packets_data['type'] = sum_packets_data['type'].str.replace('_', ' ')
 
+# Variablen für die Anpassung der Schrift- und Legenden-Größe
+label_font_size = 16
+legend_font_size = 'x-large'
+title_font_size = 'x-large'
+
 # Funktion zum Erstellen und Speichern von Plots
 def create_and_save_plot(data, ylabel, filename, palette, hue_order):
-    plt.rcParams.update({'font.size': 14})
+    plt.rcParams.update({'font.size': label_font_size})
     plt.figure(figsize=(16, 10))
     sns.barplot(x='framework_pod', y='value', hue='type', data=data, ci=None, palette=palette, hue_order=hue_order)
-    plt.xlabel('Pod', fontsize=16)
-    plt.ylabel(ylabel, fontsize=16)
-    plt.legend(title='Type', loc='upper right', fontsize='x-large', title_fontsize='x-large')
+    plt.xlabel('Pod', fontsize=label_font_size)
+    plt.ylabel(ylabel, fontsize=label_font_size)
+    plt.legend(title='Type', loc='upper right', fontsize=legend_font_size, title_fontsize=title_font_size)
     plt.xticks(rotation=90)  # Drehe die x-Achsen-Beschriftungen für bessere Lesbarkeit
     plt.tight_layout()
     plt.savefig(filename)
@@ -70,8 +78,8 @@ palette_bytes = {'received bytes': '#807d59', 'transmit bytes': '#74567a'}
 palette_packets = {'received packets': '#807d59', 'transmit packets': '#74567a'}
 
 # Gesamte Datenplots erstellen und speichern
-create_and_save_plot(sum_bytes_data,  'Total Bytes (MB)', 'total_bytes_all_frameworks_mb.png', palette_bytes, hue_order=['received bytes', 'transmit bytes'])
-create_and_save_plot(sum_packets_data,  'Total Packets', 'total_packets_all_frameworks.png', palette_packets, hue_order=['received packets', 'transmit packets'])
+create_and_save_plot(sum_bytes_data, 'Total Bytes (MB)', 'total_bytes_all_frameworks_mb.png', palette_bytes, hue_order=['received bytes', 'transmit bytes'])
+create_and_save_plot(sum_packets_data, 'Total Packets', 'total_packets_all_frameworks.png', palette_packets, hue_order=['received packets', 'transmit packets'])
 
 print("Plots gespeichert.")
 

@@ -8,6 +8,9 @@ data = pd.read_csv('combined_summary_output.csv')
 # Daten für Pods, deren Namen mit 'kube-multus' beginnen, filtern
 kube_multus_data = data[data['pod'].str.startswith('kube-multus')]
 
+# Framework-Namen ändern
+kube_multus_data['framework'] = kube_multus_data['framework'].replace({'oakestra': 'K-oakestra'})
+
 # Median für jedes Framework berechnen
 kube_multus_median_per_framework = kube_multus_data.groupby('framework')['median'].median().reset_index()
 
@@ -30,24 +33,32 @@ namespace_classification = {
 # Neue Spalte für die Klassifikation der Namespaces hinzufügen
 data['namespace_type'] = data['namespace'].map(namespace_classification)
 
+# Framework-Namen ändern
+data['framework'] = data['framework'].replace({'oakestra': 'K-oakestra'})
+
 # Filtern, um nur die gewünschten Namespaces einzuschließen
 data = data[~data['namespace'].isin(['default', 'oakestra']) & data['namespace_type'].notnull()]
 
 # Summe der Medianwerte für jedes Framework und jeden Namespace-Typ berechnen
 sum_median_values = data.groupby(['framework', 'namespace_type'])['median'].sum().reset_index()
 
+# Variablen für die Anpassung der Schrift- und Legenden-Größe
+label_font_size = 20
+legend_font_size = 'large'
+title_font_size = 'x-large'
+
 # Plot erstellen
 plt.figure(figsize=(14, 8))
-plt.rcParams.update({'font.size': 16})
+plt.rcParams.update({'font.size': label_font_size})
 sns.barplot(x='framework', y='median', hue='namespace_type', data=sum_median_values, palette='viridis')
 
 # Titel und Labels hinzufügen
-plt.xlabel('Framework', fontsize=16)
-plt.ylabel('CPU Usage', fontsize=16)
-plt.ylim(0,0.8)
+plt.xlabel('Framework', fontsize=label_font_size)
+plt.ylabel('CPU Usage', fontsize=label_font_size)
+plt.ylim(0, 0.8)
 
 # Legende anpassen
-plt.legend(title='Type', loc='upper right', fontsize='large', title_fontsize='x-large')
+plt.legend(title='Type', loc='upper right', fontsize=legend_font_size, title_fontsize=title_font_size)
 
 # Diagramm speichern und anzeigen
 plt.tight_layout()

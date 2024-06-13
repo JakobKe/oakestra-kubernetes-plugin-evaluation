@@ -29,7 +29,7 @@ directories = [
     'oakestra',
     'ocm',
     'kubernetes',
-    'oakestra-kubernetes'
+    # 'oakestra-kubernetes'
 ]
 
 # Ausgabedatei angeben

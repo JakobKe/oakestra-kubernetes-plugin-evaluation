@@ -22,6 +22,9 @@ filtered_data = data[data['namespace'].str.contains(namespace_pattern, regex=Tru
 # Pod-Namen bereinigen
 filtered_data['clean_pod'] = filtered_data['pod'].apply(clean_pod_name)
 
+# Framework-Namen ändern
+filtered_data['framework'] = filtered_data['framework'].replace({'oakestra': 'K-oakestra'})
+
 # Pod-Namen mit Framework kombinieren
 filtered_data['framework_pod'] = filtered_data['framework'] + ' - ' + filtered_data['clean_pod']
 
@@ -51,14 +54,19 @@ sum_packets_data.sort_values(['framework', 'value'], ascending=[True, False], in
 sum_bytes_data['type'] = sum_bytes_data['type'].str.replace('_', ' ')
 sum_packets_data['type'] = sum_packets_data['type'].str.replace('_', ' ')
 
+# Variablen für die Anpassung der Schrift- und Legenden-Größe
+label_font_size = 16
+legend_font_size = 'x-large'
+title_font_size = 'x-large'
+
 # Funktion zum Erstellen und Speichern von Plots
 def create_and_save_plot(data, ylabel, filename, palette, hue_order):
-    plt.rcParams.update({'font.size': 14})
+    plt.rcParams.update({'font.size': label_font_size})
     plt.figure(figsize=(16, 10))
     sns.barplot(x='framework_pod', y='value', hue='type', data=data, ci=None, palette=palette, hue_order=hue_order)
-    plt.xlabel('Pod', fontsize=16)
-    plt.ylabel(ylabel, fontsize=16)
-    plt.legend(title='Type', loc='upper right', fontsize='x-large', title_fontsize='x-large')
+    plt.xlabel('Pod', fontsize=label_font_size+4)
+    plt.ylabel(ylabel, fontsize=label_font_size+4)
+    plt.legend(title='Type', loc='upper right', fontsize=legend_font_size, title_fontsize=title_font_size)
     plt.xticks(rotation=90)  # Drehe die x-Achsen-Beschriftungen für bessere Lesbarkeit
     plt.tight_layout()
     plt.savefig(filename)
